@@ -1,14 +1,11 @@
 package de.haw_hamburg.sketchtomapgen.controller;
 
-import de.haw_hamburg.sketchtomapgen.service.SegmentationService;
+import de.haw_hamburg.sketchtomapgen.service.SegmentationServiceGeom;
 import javafx.fxml.FXML;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
-import javafx.scene.image.Image;
-import javafx.scene.image.PixelReader;
-import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -34,12 +31,12 @@ public class MainController {
   private Button generateButton;
 
   private boolean isDrawing = true;
-  private SegmentationService segmentationService;
+  private SegmentationServiceGeom segmentationService;
 
   @FXML
   public void initialize() {
     drawingCanvas.setFocusTraversable(true);
-    segmentationService = new SegmentationService((int) drawingCanvas.getWidth(), (int) drawingCanvas.getHeight());
+    segmentationService = new SegmentationServiceGeom((int) drawingCanvas.getWidth(), (int) drawingCanvas.getHeight());
 
     addMouseEventHandlers();
     addKeyboardEventHandlers();
@@ -52,7 +49,6 @@ public class MainController {
     GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
     gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
 
-    System.out.println(segmentationService.getSketchModel().getConnectedComponentCount());
     segmentationService.cleanSketchModel();
 
     //segmentationService = new SegmentationService((int) drawingCanvas.getWidth(),(int) drawingCanvas.getHeight());
@@ -89,13 +85,13 @@ public class MainController {
         gc.setLineWidth(PEN_RADIUS);
         gc.strokeLine(lastX[0], lastY[0], currentX, currentY);
 
-        segmentationService.addPixels(lastXRounded, lastYRounded, currentX, currentY);
+        segmentationService.addPixelsUsingInterpolation(lastXRounded, lastYRounded, currentX, currentY);
       } else {
         drawingCanvas.setCursor(Cursor.CLOSED_HAND);
         gc.setFill(Color.WHITESMOKE);
-        gc.fillOval(currentX - ERASER_RADIUS / 2, currentY - ERASER_RADIUS / 2, ERASER_RADIUS, ERASER_RADIUS);
+        gc.fillRect(currentX - ERASER_RADIUS / 2, currentY - ERASER_RADIUS / 2, ERASER_RADIUS, ERASER_RADIUS);
 
-        segmentationService.removePixels(currentX, currentY);
+        segmentationService.removePixels(currentX, currentY, (int) ERASER_RADIUS);
       }
 
       lastX[0] = currentX;

@@ -7,17 +7,19 @@ import org.jgrapht.alg.cycle.HierholzerEulerianCycle;
 import org.jgrapht.alg.interfaces.AStarAdmissibleHeuristic;
 import org.jgrapht.alg.interfaces.EulerianCycleAlgorithm;
 import org.jgrapht.alg.shortestpath.AStarShortestPath;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
 import java.awt.Point;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 public class SketchModel {
   private Graph<Point, DefaultEdge> sketchGraph;
+  private GeometryFactory geometryFactory;
   private int width;
   private int height;
 
@@ -25,6 +27,7 @@ public class SketchModel {
     this.width = width;
     this.height = height;
     this.sketchGraph = new SimpleGraph<>(DefaultEdge.class);
+    geometryFactory = new GeometryFactory();
   }
 
   public void addPixelAt(int x, int y) {
@@ -35,7 +38,7 @@ public class SketchModel {
   }
 
   public void removePixelAt(int x, int y) {
-    //TODO
+    sketchGraph.removeVertex(new Point(x,y));
   }
 
   private void connectToNeighbors(Point pixel) {
@@ -90,19 +93,17 @@ public class SketchModel {
   }
 
   public List<Point> findShortestPath(Point start, Point end) {
-    // Dijkstra-Algorithmus für den kürzesten Pfad
     DijkstraShortestPath<Point, DefaultEdge> dijkstraAlg =
             new DijkstraShortestPath<>(sketchGraph);
 
-    // Pfad zwischen Start- und Endpunkt finden
     GraphPath<Point, DefaultEdge> path = dijkstraAlg.getPath(start, end);
-
-    // Wenn kein Pfad existiert, null oder leere Liste zurückgeben
     if (path == null) {
       return null;
     }
-
-    // Vertex-Liste des Pfads zurückgeben
     return path.getVertexList();
+  }
+
+  public boolean isConnected(){
+    return new ConnectivityInspector<>(sketchGraph).isConnected();
   }
 }
