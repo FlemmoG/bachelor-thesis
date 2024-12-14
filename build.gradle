@@ -40,7 +40,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
     implementation 'org.openpnp:opencv:4.3.0-0'
     implementation 'org.jgrapht:jgrapht-core:1.5.2'
-    implementation 'org.locationtech.jts:jts-core:1.18.2'
+    implementation 'org.locationtech.jts:jts-core:1.20.0'
 
 }
 

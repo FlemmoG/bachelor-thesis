@@ -4,8 +4,12 @@ import de.haw_hamburg.sketchtomapgen.model.SketchModelGeom;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineSegment;
+import org.locationtech.jts.geom.LineString;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SegmentationServiceGeom {
@@ -76,9 +80,16 @@ public class SegmentationServiceGeom {
   }
 
   public void cleanSketchModel() {
-    List<LineSegment> lineSegments = sketchModel.extractSortedBoundaryEdges();
-    sketchModel = new SketchModelGeom(); // Clear the sketch model
+    Geometry alphaShape = sketchModel.getConcaveHull();
 
+    List<LineSegment> lineSegments = new ArrayList<>();
+    Coordinate[] coordinates = alphaShape.getBoundary().getCoordinates();
+    for (int i = 0; i < coordinates.length - 1; i++) {
+      lineSegments.add(new LineSegment(coordinates[i], coordinates[i + 1]));
+    }
+
+    sketchModel = new SketchModelGeom();
+    //draw
     for (LineSegment lineSegment : lineSegments) {
       // Get integer coordinates of the segment's endpoints
       int x1 = (int) Math.round(lineSegment.p0.x);
@@ -86,9 +97,7 @@ public class SegmentationServiceGeom {
       int x2 = (int) Math.round(lineSegment.p1.x);
       int y2 = (int) Math.round(lineSegment.p1.y);
 
-      // Use Bresenham's algorithm to draw all pixels along the line
       addPixelsUsingInterpolation(x1, y1, x2, y2);
     }
   }
-
 }
