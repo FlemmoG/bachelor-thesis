@@ -4,10 +4,13 @@ import de.haw_hamburg.sketchtomapgen.model.SketchModel;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
+import org.locationtech.jts.geom.LineSegment;
 
-import java.awt.Point;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SegmentationService {
   private SketchModel sketchModel;
@@ -17,15 +20,15 @@ public class SegmentationService {
   public SegmentationService(int width, int height) {
     this.width = width;
     this.height = height;
-    sketchModel = new SketchModel(width, height);
+    sketchModel = new SketchModel();
   }
 
   public WritableImage getImage() {
-    WritableImage image = new WritableImage(sketchModel.getWidth(), sketchModel.getHeight());
+    WritableImage image = new WritableImage(width, height);
     PixelWriter pixelWriter = image.getPixelWriter();
 
-    for (int x = 0; x < sketchModel.getWidth(); x++) {
-      for (int y = 0; y < sketchModel.getHeight(); y++) {
+    for (int x = 0; x < width; x++) {
+      for (int y = 0; y < height; y++) {
         if (sketchModel.isPixelSet(x, y)) {
           pixelWriter.setColor(x, y, Color.BLACK);
         } else {
@@ -37,7 +40,7 @@ public class SegmentationService {
     return image;
   }
 
-  public void addPixels(int lastXRounded, int lastYRounded, int currentX, int currentY) {
+  public void addPixelsUsingInterpolation(int lastXRounded, int lastYRounded, int currentX, int currentY) {
     int dx = Math.abs(currentX - lastXRounded);
     int dy = Math.abs(currentY - lastYRounded);
     int sx = lastXRounded < currentX ? 1 : -1;
@@ -77,106 +80,34 @@ public class SegmentationService {
   }
 
   public void cleanSketchModel() {
-    List<Set<Point>> components = sketchModel.getComponents();
-    SketchModel newSketchModel = new SketchModel(width, height);
-    for (Set<Point> component : components) {
-      List<Point> closedContour = closeContour(component, 0.01);
-      closedContour.forEach((pixel) -> newSketchModel.addPixelAt(pixel.x, pixel.y));
-    }
+    GeometryCollection clusters = sketchModel.getConcaveHullsForClusters();
 
-    sketchModel = newSketchModel;
-  }
+    // init new sketch model (aggregates all concave hulls for all clusters)
+    sketchModel = new SketchModel();
 
-  public List<Point> closeContour(Set<Point> points, double epsilon) {
-    if (points.size() < 3) {
-      return new ArrayList<>(points);
-    }
+    // get concave hull boundaries for each cluster
+    for (int i = 0; i < clusters.getNumGeometries(); i++) {
+      Geometry clusterGeometry = clusters.getGeometryN(i);
 
-    // Konvertiere Set zu Liste und sortiere
-    List<Point> sortedPoints = new ArrayList<>(points);
-    sortedPoints.sort(Comparator.comparingInt((Point p) -> p.y).thenComparingInt(p -> p.x));
+      if (clusterGeometry.getBoundary() != null) {
+        List<LineSegment> lineSegments = new ArrayList<>();
+        Coordinate[] coordinates = clusterGeometry.getBoundary().getCoordinates();
 
-    // Finde Startpunkt (unterster, linkester Punkt)
-    Point start = sortedPoints.get(0);
+        // get line segments from coordinates
+        for (int j = 0; j < coordinates.length - 1; j++) {
+          lineSegments.add(new LineSegment(coordinates[j], coordinates[j + 1]));
+        }
 
-    // Convex Hull Algorithmus (Graham Scan)
-    List<Point> convexHull = new ArrayList<>();
-    convexHull.add(start);
+        // round coordinates to add to new sketch model with interpolation
+        for (LineSegment lineSegment : lineSegments) {
+          int x1 = (int) Math.round(lineSegment.p0.x);
+          int y1 = (int) Math.round(lineSegment.p0.y);
+          int x2 = (int) Math.round(lineSegment.p1.x);
+          int y2 = (int) Math.round(lineSegment.p1.y);
 
-    // Sortiere Punkte nach Polarwinkel
-    sortedPoints.sort((p1, p2) -> {
-      double angle1 = Math.atan2(p1.y - start.y, p1.x - start.x);
-      double angle2 = Math.atan2(p2.y - start.y, p2.x - start.x);
-      return Double.compare(angle1, angle2);
-    });
-
-    for (Point p : sortedPoints) {
-      while (convexHull.size() > 1) {
-        Point top = convexHull.get(convexHull.size() - 1);
-        Point secondTop = convexHull.get(convexHull.size() - 2);
-
-        // Kreuzprodukt zur Orientierungsbestimmung
-        double crossProduct = (top.x - secondTop.x) * (p.y - secondTop.y) -
-                (top.y - secondTop.y) * (p.x - secondTop.x);
-
-        if (crossProduct <= 0) {
-          convexHull.remove(convexHull.size() - 1);
-        } else {
-          break;
+          addPixelsUsingInterpolation(x1, y1, x2, y2);
         }
       }
-      convexHull.add(p);
     }
-
-    // Douglas-Peucker Vereinfachung
-    return douglasPeucker(convexHull, epsilon);
   }
-
-  private List<Point> douglasPeucker(List<Point> points, double epsilon) {
-    if (points.size() <= 2) {
-      return new ArrayList<>(points);
-    }
-
-    // Finde Punkt mit maximaler Distanz zur Linie
-    double maxDistance = 0;
-    int index = 0;
-    int end = points.size() - 1;
-
-    for (int i = 1; i < end; i++) {
-      double distance = perpendicularDistance(points.get(i), points.get(0), points.get(end));
-      if (distance > maxDistance) {
-        index = i;
-        maxDistance = distance;
-      }
-    }
-
-    // Wenn maximale Distanz kleiner epsilon, reduziere auf Start und Endpunkt
-    if (maxDistance < epsilon) {
-      return new ArrayList<>(Arrays.asList(points.get(0), points.get(end)));
-    }
-
-    // Rekursiv teilen
-    List<Point> results1 = douglasPeucker(points.subList(0, index + 1), epsilon);
-    List<Point> results2 = douglasPeucker(points.subList(index, points.size()), epsilon);
-
-    // Kombiniere Ergebnisse mit neuer ArrayList
-    List<Point> combinedResults = new ArrayList<>(results1);
-    combinedResults.addAll(results2.subList(1, results2.size()));
-    return combinedResults;
-  }
-
-  private double perpendicularDistance(Point point, Point lineStart, Point lineEnd) {
-    double area = Math.abs(
-            (lineStart.x * lineEnd.y + lineEnd.x * point.y + point.x * lineStart.y) -
-                    (lineEnd.x * lineStart.y + point.x * lineEnd.y + lineStart.x * point.y)
-    ) / 2.0;
-
-    double bottom = Math.sqrt(
-            Math.pow(lineStart.x - lineEnd.x, 2) +
-                    Math.pow(lineStart.y - lineEnd.y, 2)
-    );
-
-    return 2 * area / bottom;
-  }
-
 }

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="de.haw_hamburg.sketchtomapgen.controller.IconPlacementController">
+    <center>
+        <StackPane>
+            <Canvas fx:id="drawingCanvas" width="800" height="600" style="-fx-border-color: black; -fx-background-color: white"/>
+        </StackPane>
+    </center>
+    <right>
+        <VBox spacing="10" alignment="TOP_CENTER" style="-fx-border-color: black; -fx-border-width: 0 0 0 1; -fx-padding: 10;">
+            <HBox spacing="5" alignment="CENTER">
+                <Button fx:id="buildingIcon" text="Building" minWidth="80"/>
+                <Button fx:id="roadIcon" text="Road" minWidth="80"/>
+            </HBox>
+            <HBox spacing="5" alignment="CENTER">
+                <Button fx:id="parkIcon" text="Park" minWidth="80"/>
+                <Button fx:id="waterIcon" text="Water" minWidth="80"/>
+            </HBox>
+            <Button fx:id="finishPlacementButton" text="Finish Icon Placement" minWidth="150" style="-fx-background-color: lightgreen;"/>
+        </VBox>
+    </right>
+</BorderPane>

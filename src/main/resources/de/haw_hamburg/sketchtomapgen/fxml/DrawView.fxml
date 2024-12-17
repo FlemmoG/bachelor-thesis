@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="de.haw_hamburg.sketchtomapgen.controller.DrawController">
+    <center>
+        <StackPane>
+            <Canvas fx:id="drawingCanvas" width="800" height="600" style="-fx-border-color: black; -fx-background-color: white"/>
+        </StackPane>
+    </center>
+    <right>
+        <VBox spacing="10" alignment="TOP_CENTER" style="-fx-border-color: black; -fx-border-width: 0 0 0 1; -fx-padding: 10;">
+            <Button fx:id="drawButton" text="Zeichnen (D)" minWidth="80"/>
+            <Button fx:id="eraseButton" text="Radieren (E)" minWidth="80"/>
+            <Button fx:id="generateButton" text="Generieren (Enter)" minWidth="80"/>
+        </VBox>
+    </right>
+</BorderPane>

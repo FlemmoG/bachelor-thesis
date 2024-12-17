@@ -1,109 +1,100 @@
 package de.haw_hamburg.sketchtomapgen.model;
 
-import org.jgrapht.Graph;
-import org.jgrapht.GraphPath;
-import org.jgrapht.alg.connectivity.ConnectivityInspector;
-import org.jgrapht.alg.cycle.HierholzerEulerianCycle;
-import org.jgrapht.alg.interfaces.AStarAdmissibleHeuristic;
-import org.jgrapht.alg.interfaces.EulerianCycleAlgorithm;
-import org.jgrapht.alg.shortestpath.AStarShortestPath;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
+import de.haw_hamburg.sketchtomapgen.util.ClusterableCoordinate;
+import org.apache.commons.math3.ml.clustering.Cluster;
+import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
+import org.locationtech.jts.algorithm.hull.ConcaveHull;
+import org.locationtech.jts.geom.*;
 
-import java.awt.Point;
 import java.util.*;
-import java.util.stream.Collectors;
-
 
 public class SketchModel {
-  private Graph<Point, DefaultEdge> sketchGraph;
+  private Set<ClusterableCoordinate> points;
   private GeometryFactory geometryFactory;
-  private int width;
-  private int height;
 
-  public SketchModel(int width, int height) {
-    this.width = width;
-    this.height = height;
-    this.sketchGraph = new SimpleGraph<>(DefaultEdge.class);
-    geometryFactory = new GeometryFactory();
+  public SketchModel() {
+    this.points = new HashSet<>();
+    this.geometryFactory = new GeometryFactory();
   }
 
   public void addPixelAt(int x, int y) {
-    Point pixel = new Point(x, y);
-
-    sketchGraph.addVertex(pixel);
-    connectToNeighbors(pixel);
-  }
-
-  public void removePixelAt(int x, int y) {
-    sketchGraph.removeVertex(new Point(x,y));
-  }
-
-  private void connectToNeighbors(Point pixel) {
-    // Nachbarn definieren: 8-Nachbarschaft (horizontal, vertikal, diagonal)
-    int[][] neighbors = {
-            {-1, -1}, {-1, 0}, {-1, 1},
-            {0, -1},           {0, 1},
-            {1, -1}, {1, 0}, {1, 1}
-    };
-
-    for (int[] offset : neighbors) {
-      Point neighbor = new Point(pixel.x + offset[0], pixel.y + offset[1]);
-      if (sketchGraph.containsVertex(neighbor)) {
-        sketchGraph.addEdge(pixel, neighbor);
-      }
-    }
-  }
-
-  public Graph<Point, DefaultEdge> getSketchGraph() {
-    return sketchGraph;
-  }
-
-  public int getPixelCount() {
-    return sketchGraph.vertexSet().size();
-  }
-
-  public int getWidth() {
-    return width;
-  }
-
-  public int getHeight() {
-    return height;
+    points.add(new ClusterableCoordinate(x, y));
   }
 
   public boolean isPixelSet(int x, int y) {
-    return sketchGraph.containsVertex(new Point(x, y));
+    return points.contains(new ClusterableCoordinate(x, y));
   }
 
-  public int getConnectedComponentCount() {
-    ConnectivityInspector<Point, DefaultEdge> connectivity = new ConnectivityInspector<>(sketchGraph);
-    return connectivity.connectedSets().size();
+  public void removePixelAt(int x, int y) {
+    points.remove(new ClusterableCoordinate(x,y));
   }
 
-  public List<Set<Point>> getComponents(){
-    ConnectivityInspector<Point, DefaultEdge> connectivity = new ConnectivityInspector<>(sketchGraph);
-    return connectivity.connectedSets();
+  public Set<ClusterableCoordinate> getPoints() {
+    return points;
   }
 
-  public boolean isEulerianCycle() {
-    return sketchGraph.vertexSet().stream()
-            .allMatch(vertex -> sketchGraph.degreeOf(vertex) % 2 == 0);
+  public Geometry getConcaveHull(){
+    MultiPoint multiPoint = geometryFactory.createMultiPointFromCoords(points.toArray(new Coordinate[0]));
+    double maxLength = calculateMaxDistanceBetweenPoints();
+
+    System.out.println(maxLength);
+
+    return ConcaveHull.concaveHullByLength(multiPoint,maxLength,false);
   }
 
-  public List<Point> findShortestPath(Point start, Point end) {
-    DijkstraShortestPath<Point, DefaultEdge> dijkstraAlg =
-            new DijkstraShortestPath<>(sketchGraph);
+  public GeometryCollection getConcaveHullsForClusters() {
+    double eps = 5.0; // Radius for neighbors
+    int minPoints = 3; // minimal points for cluster
 
-    GraphPath<Point, DefaultEdge> path = dijkstraAlg.getPath(start, end);
-    if (path == null) {
-      return null;
+    DBSCANClusterer<ClusterableCoordinate> clusterer = new DBSCANClusterer<>(eps, minPoints);
+
+    // Cluster berechnen
+    List<Cluster<ClusterableCoordinate>> clusters = clusterer.cluster(points);
+
+    // Concave Hulls für alle Cluster erstellen
+    List<Geometry> hulls = new ArrayList<>();
+    for (Cluster<ClusterableCoordinate> cluster : clusters) {
+      List<Coordinate> clusterCoords = new ArrayList<>();
+      for (ClusterableCoordinate point : cluster.getPoints()) {
+        clusterCoords.add(new Coordinate(point.x, point.y));
+      }
+
+      if (!clusterCoords.isEmpty()) {
+        MultiPoint multiPoint = geometryFactory.createMultiPointFromCoords(clusterCoords.toArray(new Coordinate[0]));
+        double maxLength = calculateMaxDistanceBetweenPoints();
+        Geometry concaveHull = ConcaveHull.concaveHullByLength(multiPoint, maxLength, false);
+        hulls.add(concaveHull);
+      }
     }
-    return path.getVertexList();
+
+    // Alle Hulls in eine GeometryCollection zusammenführen
+    return geometryFactory.createGeometryCollection(hulls.toArray(new Geometry[0]));
   }
 
-  public boolean isConnected(){
-    return new ConnectivityInspector<>(sketchGraph).isConnected();
+  private double calculateMaxDistanceBetweenPoints() {
+    double totalDistance = 0.0;
+    int count = 0;
+
+    Iterator<ClusterableCoordinate> iterator = points.iterator();
+    Coordinate prev = iterator.next();
+
+    while (iterator.hasNext()) {
+      Coordinate curr = iterator.next();
+
+      // Distance between two points
+      double distance = prev.distance(curr);
+      totalDistance += distance;
+      count++;
+
+      prev = curr;
+    }
+
+    // Avg distance (scaled)
+    double averageDistance = totalDistance / count;
+
+    return averageDistance * 0.2;
   }
+
+
+
 }

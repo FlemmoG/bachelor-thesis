@@ -1,5 +1,6 @@
 package de.haw_hamburg.sketchtomapgen.app;
 
+import de.haw_hamburg.sketchtomapgen.controller.MainController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -16,15 +17,18 @@ public class MainApp extends Application {
   }
 
   @Override
-  public void start(Stage primaryStage) {
-    try {
-      FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/haw_hamburg/sketchtomapgen/fxml/MainView.fxml"));
-      Scene scene = new Scene(loader.load());
-      primaryStage.setTitle("Sketch-to-Map Generator");
-      primaryStage.setScene(scene);
-      primaryStage.show();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+  public void start(Stage primaryStage) throws Exception {
+    // MainView laden
+    FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/haw_hamburg/sketchtomapgen/fxml/MainView.fxml"));
+    Parent mainView = loader.load();
+
+    // Controller holen und die Stage setzen
+    MainController controller = loader.getController();
+    controller.setStage(primaryStage);
+
+    // Scene anzeigen
+    primaryStage.setScene(new Scene(mainView, 800, 600));
+    primaryStage.setTitle("Sketch To Map Generator");
+    primaryStage.show();
   }
 }

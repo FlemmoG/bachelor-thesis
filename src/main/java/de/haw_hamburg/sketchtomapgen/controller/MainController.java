@@ -1,117 +1,48 @@
 package de.haw_hamburg.sketchtomapgen.controller;
 
-import de.haw_hamburg.sketchtomapgen.service.SegmentationServiceGeom;
+import de.haw_hamburg.sketchtomapgen.util.DataReceiver;
+import de.haw_hamburg.sketchtomapgen.util.ViewRoutes;
 import javafx.fxml.FXML;
-import javafx.scene.Cursor;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Button;
-import javafx.scene.image.WritableImage;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.paint.Color;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 
+import java.io.IOException;
 
 public class MainController {
 
-  private final double ERASER_RADIUS = 50;
-  private final double PEN_RADIUS = 1;
-
-  @FXML
-  private Canvas drawingCanvas;
-
-  @FXML
-  private Button drawButton;
-
-  @FXML
-  private Button eraseButton;
-
-  @FXML
-  private Button generateButton;
-
-  private boolean isDrawing = true;
-  private SegmentationServiceGeom segmentationService;
-
-  @FXML
-  public void initialize() {
-    drawingCanvas.setFocusTraversable(true);
-    segmentationService = new SegmentationServiceGeom((int) drawingCanvas.getWidth(), (int) drawingCanvas.getHeight());
-
-    addMouseEventHandlers();
-    addKeyboardEventHandlers();
+  private Stage stage;
+  public void setStage(Stage stage) {
+    this.stage = stage;
   }
 
-  private void generateMap() {
+  public void switchView(String fxmlPath, Object data) throws IOException {
+    // View wechseln: Neue FXML-Datei laden und Root der Scene setzen
+    FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+    Parent newView = loader.load();
 
-    System.out.println("Generating map from the sketch...");
+    // Controller für die neue View optional abrufen
+    Object controller = loader.getController();
+    if (controller instanceof AbstractController) {
+      ((AbstractController) controller).setMainController(this); // MainController weitergeben
+    }
 
-    GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
-    gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
+    if (data != null && controller instanceof DataReceiver) {
+      ((DataReceiver) controller).receiveData(data);
+    }
 
-    segmentationService.cleanSketchModel();
-
-    //segmentationService = new SegmentationService((int) drawingCanvas.getWidth(),(int) drawingCanvas.getHeight());
-    WritableImage processedImage = segmentationService.getImage();
-    gc.drawImage(processedImage, 0, 0);
+    stage.setScene(new Scene(newView));
   }
 
-  private void addMouseEventHandlers() {
-    drawButton.setOnAction(e -> isDrawing = true);
-    eraseButton.setOnAction(e -> isDrawing = false);
-    generateButton.setOnAction(e -> generateMap());
+  public void switchView(String fxmlPath) throws IOException{
+    switchView(fxmlPath, null);
+  }
 
-    GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
-
-    drawingCanvas.setOnMouseClicked(event -> drawingCanvas.requestFocus());
-
-    final double[] lastX = {0};
-    final double[] lastY = {0};
-
-    drawingCanvas.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
-      lastX[0] = e.getX();
-      lastY[0] = e.getY();
-    });
-
-    drawingCanvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> {
-      int currentX = (int) Math.round(e.getX());
-      int currentY = (int) Math.round(e.getY());
-      int lastXRounded = (int) Math.round(lastX[0]);
-      int lastYRounded = (int) Math.round(lastY[0]);
-
-      if (isDrawing) {
-        drawingCanvas.setCursor(Cursor.HAND);
-        gc.setStroke(Color.BLACK);
-        gc.setLineWidth(PEN_RADIUS);
-        gc.strokeLine(lastX[0], lastY[0], currentX, currentY);
-
-        segmentationService.addPixelsUsingInterpolation(lastXRounded, lastYRounded, currentX, currentY);
-      } else {
-        drawingCanvas.setCursor(Cursor.CLOSED_HAND);
-        gc.setFill(Color.WHITESMOKE);
-        gc.fillRect(currentX - ERASER_RADIUS / 2, currentY - ERASER_RADIUS / 2, ERASER_RADIUS, ERASER_RADIUS);
-
-        segmentationService.removePixels(currentX, currentY, (int) ERASER_RADIUS);
-      }
-
-      lastX[0] = currentX;
-      lastY[0] = currentY;
-    });
-
-    drawingCanvas.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> drawingCanvas.setCursor(Cursor.DEFAULT));
+  @FXML
+  private void openDrawView() throws IOException {
+    switchView(ViewRoutes.DRAW_VIEW, null);
   }
 
 
-  private void addKeyboardEventHandlers(){
-    drawingCanvas.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
-      if (event.getCode() == KeyCode.D) {
-        isDrawing = true;
-      } else if (event.getCode() == KeyCode.E) {
-        isDrawing = false;
-      } else if (event.getCode() == KeyCode.ENTER) {
-        generateMap();
-      }
-    });
-  }
 }
-
