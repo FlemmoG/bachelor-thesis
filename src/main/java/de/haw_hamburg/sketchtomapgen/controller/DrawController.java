@@ -14,6 +14,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 
 public class DrawController extends AbstractController{
@@ -68,6 +70,7 @@ public class DrawController extends AbstractController{
   }
 
   private void addMouseEventHandlers() {
+
     drawButton.setOnAction(e -> isDrawing = true);
     eraseButton.setOnAction(e -> isDrawing = false);
     generateButton.setOnAction(e -> generateMap());

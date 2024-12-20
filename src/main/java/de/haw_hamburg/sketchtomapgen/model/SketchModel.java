@@ -1,6 +1,7 @@
 package de.haw_hamburg.sketchtomapgen.model;
 
 import de.haw_hamburg.sketchtomapgen.util.ClusterableCoordinate;
+import de.haw_hamburg.sketchtomapgen.util.Icon;
 import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 import org.locationtech.jts.algorithm.hull.ConcaveHull;
@@ -10,11 +11,13 @@ import java.util.*;
 
 public class SketchModel {
   private Set<ClusterableCoordinate> points;
+  private Map<Coordinate, Icon> icons;
   private GeometryFactory geometryFactory;
 
   public SketchModel() {
     this.points = new HashSet<>();
     this.geometryFactory = new GeometryFactory();
+    this.icons = new HashMap<>();
   }
 
   public void addPixelAt(int x, int y) {
@@ -31,6 +34,18 @@ public class SketchModel {
 
   public Set<ClusterableCoordinate> getPoints() {
     return points;
+  }
+
+  public void addIcon(Coordinate coordinate, Icon icon){
+    icons.put(coordinate, icon);
+  }
+
+  public Map<Coordinate, Icon> getIcons() {
+    return icons;
+  }
+
+  public void getIcon(){
+
   }
 
   public Geometry getConcaveHull(){

@@ -2,6 +2,8 @@
 
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
@@ -14,9 +16,27 @@
     </center>
     <right>
         <VBox spacing="10" alignment="TOP_CENTER" style="-fx-border-color: black; -fx-border-width: 0 0 0 1; -fx-padding: 10;">
-            <Button fx:id="drawButton" text="Zeichnen (D)" minWidth="80"/>
-            <Button fx:id="eraseButton" text="Radieren (E)" minWidth="80"/>
-            <Button fx:id="generateButton" text="Generieren (Enter)" minWidth="80"/>
+            <Button fx:id="drawButton" text="Zeichnen (D)" minWidth="80">
+                <graphic>
+                    <ImageView fitWidth="30" fitHeight="30" preserveRatio="true">
+                        <Image url="@../assets/pen.png" />
+                    </ImageView>
+                </graphic>
+            </Button>
+            <Button fx:id="eraseButton" text="Radieren (E)" minWidth="80">
+                <graphic>
+                    <ImageView fitWidth="30" fitHeight="30" preserveRatio="true">
+                        <Image url="@../assets/rubber.png" />
+                    </ImageView>
+                </graphic>
+            </Button>
+            <Button fx:id="generateButton" text="Generieren (Enter)" minWidth="80">
+                <graphic>
+                    <ImageView fitWidth="30" fitHeight="30" preserveRatio="true">
+                        <Image url="@../assets/generate.png" />
+                    </ImageView>
+                </graphic>
+            </Button>
         </VBox>
     </right>
 </BorderPane>
