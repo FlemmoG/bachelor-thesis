@@ -3,23 +3,24 @@ package de.haw_hamburg.sketchtomapgen.model;
 import de.haw_hamburg.sketchtomapgen.util.Icon;
 import javafx.scene.paint.Color;
 import org.locationtech.jts.geom.Coordinate;
-
-import java.util.Set;
+import org.locationtech.jts.geom.Polygon;
 
 public class VoronoiCellModel {
 
-  private Set<Coordinate> points;
+  private Polygon polygon;
   private Color color;
   private Icon icon;
+  private Coordinate centroid;
 
-  public VoronoiCellModel(Set<Coordinate> points, Color color, Icon icon) {
-    this.points = points;
+  public VoronoiCellModel(Polygon polygon, Color color, Icon icon, Coordinate centroid) {
+    this.polygon = polygon;
     this.color = color;
     this.icon = icon;
+    this.centroid = centroid;
   }
 
-  public Set<Coordinate> getPoints() {
-    return points;
+  public Polygon getPolygon() {
+    return polygon;
   }
 
   public Color getColor() {
@@ -30,8 +31,8 @@ public class VoronoiCellModel {
     return icon;
   }
 
-  public boolean isPixelSet(int x, int y) {
-    return points.contains(new Coordinate(x, y));
+  public Coordinate getCentroid() {
+    return centroid;
   }
 }
 

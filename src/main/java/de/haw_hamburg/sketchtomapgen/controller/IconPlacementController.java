@@ -5,6 +5,7 @@ import de.haw_hamburg.sketchtomapgen.service.IconPlacementService;
 import de.haw_hamburg.sketchtomapgen.util.AssetRoutes;
 import de.haw_hamburg.sketchtomapgen.util.DataReceiver;
 import de.haw_hamburg.sketchtomapgen.util.Icon;
+import de.haw_hamburg.sketchtomapgen.util.ViewRoutes;
 import javafx.fxml.FXML;
 import javafx.scene.Cursor;
 import javafx.scene.ImageCursor;
@@ -14,8 +15,10 @@ import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.VBox;
 import org.locationtech.jts.geom.Coordinate;
 
+import java.io.IOException;
 import java.net.URL;
 
 public class IconPlacementController extends AbstractController implements DataReceiver {
@@ -32,6 +35,12 @@ public class IconPlacementController extends AbstractController implements DataR
   private Button waterButton;
   @FXML
   private Button finishPlacementButton;
+  @FXML
+  private VBox satisfactionSection; // Section for satisfaction question
+  @FXML
+  private Button yesButton;
+  @FXML
+  private Button noButton;
   private final int CUSTOM_CURSOR_SIZE = 32;
   private IconPlacementService iconPlacementService;
   private Icon activeIcon = Icon.BLANK;
@@ -43,15 +52,29 @@ public class IconPlacementController extends AbstractController implements DataR
     addMouseEventHandlers();
   }
 
-  private void finishPlacement(){
+  private void finishPlacement() {
     GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
-    gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
-
 
     iconPlacementService.computeVoronoiFromIcons();
 
     WritableImage processedImage = iconPlacementService.getImage();
     gc.drawImage(processedImage, 0, 0);
+    satisfactionSection.setVisible(true);
+  }
+
+  @FXML
+  private void openResultView() {
+    try {
+      mainController.switchView(ViewRoutes.RESULT_VIEW, iconPlacementService.getVoronoiCellModels());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @FXML
+  private void handleNo() {
+    System.out.println("User is not satisfied with the placement.");
+    // Add logic to allow further changes or restart the placement process
   }
 
   private void addMouseEventHandlers() {

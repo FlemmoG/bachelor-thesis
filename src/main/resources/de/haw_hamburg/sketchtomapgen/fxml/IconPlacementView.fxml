@@ -9,6 +9,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.HBox?>
 
+<?import javafx.scene.control.Label?>
 <BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="de.haw_hamburg.sketchtomapgen.controller.IconPlacementController">
     <center>
         <StackPane>
@@ -55,6 +56,15 @@
             </HBox>
             <!-- Finish Button -->
             <Button fx:id="finishPlacementButton" text="Finish Icon Placement" minWidth="150" minHeight="50" style="-fx-background-color: lightgreen;"/>
+            <!-- Satisfaction Section -->
+            <VBox fx:id="satisfactionSection" spacing="10" alignment="CENTER" visible="false">
+                <Label text="Zufrieden mit der Aufteilung?" style="-fx-font-size: 14px;"/>
+                <HBox spacing="10" alignment="CENTER">
+                    <Button fx:id="yesButton" text="Ja" minWidth="70" minHeight="30" onAction="#openResultView"/>
+                    <Button fx:id="noButton" text="Nein" minWidth="70" minHeight="30" onAction="#handleNo"/>
+                </HBox>
+            </VBox>
         </VBox>
     </right>
 </BorderPane>
+

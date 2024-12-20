@@ -2,6 +2,7 @@ package de.haw_hamburg.sketchtomapgen.service;
 
 import de.haw_hamburg.sketchtomapgen.model.SketchModel;
 import de.haw_hamburg.sketchtomapgen.model.VoronoiCellModel;
+import de.haw_hamburg.sketchtomapgen.model.VoronoiCellModelCollection;
 import de.haw_hamburg.sketchtomapgen.util.Icon;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
@@ -13,7 +14,7 @@ import java.util.*;
 
 public class IconPlacementService {
   private SketchModel sketchModel;
-  private List<VoronoiCellModel> voronoiCellModels;
+  private VoronoiCellModelCollection voronoiCellModels;
   private int width;
   private int height;
 
@@ -33,7 +34,7 @@ public class IconPlacementService {
     GeometryCollection concaveHullsForClusters = sketchModel.getConcaveHullsForClusters();
     Map<Coordinate, Icon> icons = sketchModel.getIcons();
 
-    List<VoronoiCellModel> voronoiCellModels = new ArrayList<>();
+    VoronoiCellModelCollection voronoiCellModels = new VoronoiCellModelCollection();
     Random random = new Random();
 
     for (int i = 0; i < concaveHullsForClusters.getNumGeometries(); i++) {
@@ -51,6 +52,7 @@ public class IconPlacementService {
 
       VoronoiDiagramBuilder voronoiDiagramBuilder = new VoronoiDiagramBuilder();
       voronoiDiagramBuilder.setSites(pointsWithinHull);
+      voronoiDiagramBuilder.setTolerance(0);
       Geometry voronoiDiagram = voronoiDiagramBuilder.getDiagram(new GeometryFactory());
 
       for (int j = 0; j < voronoiDiagram.getNumGeometries(); j++) {
@@ -64,26 +66,8 @@ public class IconPlacementService {
           Icon icon = icons.get(nearestIconCoord);
 
           if (icon != null) {
-            // Convert polygon to coordinates including all internal points
-            Set<Coordinate> allPoints = new HashSet<>();
-            Envelope envelope = polygon.getEnvelopeInternal();
-
-            // Iterate through the bounding box of the polygon
-            for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x++) {
-              for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y++) {
-                // Check if point is within image bounds
-                if (x >= 0 && x < width && y >= 0 && y < height) {
-                  Coordinate point = new Coordinate(x, y);
-                  // Check if point is inside the clipped cell
-                  if (clippedCell.contains(new GeometryFactory().createPoint(point))) {
-                    allPoints.add(point);
-                  }
-                }
-              }
-            }
-
-            Color color = Color.rgb(random.nextInt(256), random.nextInt(256), random.nextInt(256));
-            VoronoiCellModel voronoiCellModel = new VoronoiCellModel(allPoints, color, icon);
+            Color color = Color.rgb(random.nextInt(256), random.nextInt(256), random.nextInt(256), 0.5);
+            VoronoiCellModel voronoiCellModel = new VoronoiCellModel(polygon, color, icon, nearestIconCoord);
             voronoiCellModels.add(voronoiCellModel);
           }
         }
@@ -96,11 +80,23 @@ public class IconPlacementService {
   public WritableImage getImage() {
     WritableImage image = new WritableImage(width, height);
     PixelWriter pixelWriter = image.getPixelWriter();
+
     for (VoronoiCellModel voronoiCellModel : voronoiCellModels) {
-      for (Coordinate point : voronoiCellModel.getPoints()) {
-        pixelWriter.setColor((int) point.x, (int) point.y, voronoiCellModel.getColor());
+      Polygon polygon = voronoiCellModel.getPolygon();
+      Envelope envelope = polygon.getEnvelopeInternal();
+
+      for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x++) {
+        for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y++) {
+          if (x >= 0 && x < width && y >= 0 && y < height) {
+            Coordinate point = new Coordinate(x, y);
+            if (polygon.contains(new GeometryFactory().createPoint(point))) {
+              pixelWriter.setColor(x, y, voronoiCellModel.getColor());
+            }
+          }
+        }
       }
     }
+
     return image;
   }
 
@@ -117,5 +113,9 @@ public class IconPlacementService {
     }
 
     return nearestCoord;
+  }
+
+  public VoronoiCellModelCollection getVoronoiCellModels() {
+    return voronoiCellModels;
   }
 }

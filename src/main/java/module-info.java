@@ -5,6 +5,7 @@ module de.haw_hamburg.sketchtomapgen {
   requires java.desktop;
   requires org.locationtech.jts;
   requires commons.math3;
+  requires javafx.swing;
 
   opens de.haw_hamburg.sketchtomapgen.app to javafx.fxml;
   opens de.haw_hamburg.sketchtomapgen.controller to javafx.fxml;
