@@ -31,7 +31,7 @@ application {
 
 javafx {
     version = '17.0.6'
-    modules = ['javafx.controls', 'javafx.fxml']
+    modules = ['javafx.controls', 'javafx.fxml', 'javafx.swing']
 }
 
 dependencies {
@@ -40,6 +40,8 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
     implementation 'org.openpnp:opencv:4.3.0-0'
     implementation 'org.jgrapht:jgrapht-core:1.5.2'
+    implementation 'org.locationtech.jts:jts-core:1.20.0'
+    implementation 'org.apache.commons:commons-math3:3.6.1'
 
 }
 

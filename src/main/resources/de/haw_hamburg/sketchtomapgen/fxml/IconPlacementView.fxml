@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+
+<?import javafx.scene.control.Label?>
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="de.haw_hamburg.sketchtomapgen.controller.IconPlacementController">
+    <center>
+        <StackPane>
+            <Canvas fx:id="drawingCanvas" width="800" height="600" style="-fx-border-color: black; -fx-background-color: white;"/>
+        </StackPane>
+    </center>
+    <right>
+        <VBox spacing="10" alignment="TOP_CENTER" style="-fx-border-color: black; -fx-border-width: 0 0 0 1; -fx-padding: 10;">
+            <HBox spacing="5" alignment="CENTER">
+                <!-- Building Icon Button -->
+                <Button fx:id="villageButton" minWidth="80" minHeight="80" style="-fx-background-color: #f0f0f0;">
+                    <graphic>
+                        <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
+                            <Image url="@../assets/village.png" />
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <!-- Road Icon Button -->
+                <Button fx:id="mountainButton" minWidth="80" minHeight="80" style="-fx-background-color: #f0f0f0;">
+                    <graphic>
+                        <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
+                            <Image url="@../assets/mountain.png" />
+                        </ImageView>
+                    </graphic>
+                </Button>
+            </HBox>
+            <HBox spacing="5" alignment="CENTER">
+                <!-- Park Icon Button -->
+                <Button fx:id="treeButton" minWidth="80" minHeight="80" style="-fx-background-color: #f0f0f0;">
+                    <graphic>
+                        <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
+                            <Image url="@../assets/trees.png" />
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <!-- Water Icon Button -->
+                <Button fx:id="waterButton" minWidth="80" minHeight="80" style="-fx-background-color: #f0f0f0;">
+                    <graphic>
+                        <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
+                            <Image url="@../assets/waves.png" />
+                        </ImageView>
+                    </graphic>
+                </Button>
+            </HBox>
+            <!-- Finish Button -->
+            <Button fx:id="finishPlacementButton" text="Finish Icon Placement" minWidth="150" minHeight="50" style="-fx-background-color: lightgreen;"/>
+            <!-- Satisfaction Section -->
+            <VBox fx:id="satisfactionSection" spacing="10" alignment="CENTER" visible="false">
+                <Label text="Zufrieden mit der Aufteilung?" style="-fx-font-size: 14px;"/>
+                <HBox spacing="10" alignment="CENTER">
+                    <Button fx:id="yesButton" text="Ja" minWidth="70" minHeight="30" onAction="#openResultView"/>
+                    <Button fx:id="noButton" text="Nein" minWidth="70" minHeight="30" onAction="#handleNo"/>
+                </HBox>
+            </VBox>
+        </VBox>
+    </right>
+</BorderPane>
+
