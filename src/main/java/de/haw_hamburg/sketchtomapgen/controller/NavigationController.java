@@ -10,7 +10,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-public class MainController {
+public class NavigationController {
 
   private Stage stage;
   public void setStage(Stage stage) {
@@ -18,11 +18,11 @@ public class MainController {
   }
 
   public void switchView(String fxmlPath, Object data) throws IOException {
-    // View wechseln: Neue FXML-Datei laden und Root der Scene setzen
+    // Load view
     FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
     Parent newView = loader.load();
 
-    // Controller für die neue View optional abrufen
+    // Link main controller
     Object controller = loader.getController();
     if (controller instanceof AbstractController) {
       ((AbstractController) controller).setMainController(this); // MainController weitergeben

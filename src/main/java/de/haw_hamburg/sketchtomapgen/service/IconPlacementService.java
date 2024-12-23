@@ -2,7 +2,7 @@ package de.haw_hamburg.sketchtomapgen.service;
 
 import de.haw_hamburg.sketchtomapgen.model.SketchModel;
 import de.haw_hamburg.sketchtomapgen.model.VoronoiCellModel;
-import de.haw_hamburg.sketchtomapgen.model.VoronoiCellModelCollection;
+import de.haw_hamburg.sketchtomapgen.model.collection.VoronoiCellModelCollection;
 import de.haw_hamburg.sketchtomapgen.util.Icon;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;

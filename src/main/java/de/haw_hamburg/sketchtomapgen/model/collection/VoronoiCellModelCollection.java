@@ -1,4 +1,6 @@
-package de.haw_hamburg.sketchtomapgen.model;
+package de.haw_hamburg.sketchtomapgen.model.collection;
+
+import de.haw_hamburg.sketchtomapgen.model.VoronoiCellModel;
 
 import java.util.ArrayList;
 import java.util.Iterator;
