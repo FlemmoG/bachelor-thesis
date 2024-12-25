@@ -50,9 +50,20 @@ public class IconPlacementService {
 
       if (pointsWithinHull.isEmpty()) continue;
 
+      // Handle cases where only one point is within the hull
+      if (pointsWithinHull.size() == 1) {
+        Coordinate singlePoint = pointsWithinHull.get(0);
+        Icon icon = icons.get(singlePoint);
+        if (icon != null) {
+          Color color = Color.rgb(random.nextInt(256), random.nextInt(256), random.nextInt(256), 0.5);
+          VoronoiCellModel voronoiCellModel = new VoronoiCellModel((Polygon) concaveHull, color, icon, singlePoint);
+          voronoiCellModels.add(voronoiCellModel);
+        }
+        continue;
+      }
+
       VoronoiDiagramBuilder voronoiDiagramBuilder = new VoronoiDiagramBuilder();
       voronoiDiagramBuilder.setSites(pointsWithinHull);
-      voronoiDiagramBuilder.setTolerance(0);
       Geometry voronoiDiagram = voronoiDiagramBuilder.getDiagram(new GeometryFactory());
 
       for (int j = 0; j < voronoiDiagram.getNumGeometries(); j++) {
