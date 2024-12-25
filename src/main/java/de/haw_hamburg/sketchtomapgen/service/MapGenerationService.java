@@ -58,61 +58,56 @@ public class MapGenerationService {
     List<Polygon> polygons = voronoiCellModels.getPolygons();
     if (polygons.isEmpty()) return;
 
+    GeometryFactory factory = new GeometryFactory();
+    Geometry combinedGeometry = factory.createMultiPolygon(
+                    polygons.toArray(new Polygon[0]))
+            .union();
+
     Random random = new Random();
+    Point center = combinedGeometry.getCentroid();
 
-    for (Polygon polygon : polygons) {
-      Point center = polygon.getCentroid();
+    Map<Character, List<WeightedRule>> stochasticRules = new HashMap<>();
+    stochasticRules.put('I', Arrays.asList(
+            new WeightedRule("+F-F-RX", 1),
+            new WeightedRule("-F+F-RX", 1),
+            new WeightedRule("-F-F+RX", 1)
+    ));
+    stochasticRules.put('X', Arrays.asList(
+            new WeightedRule("+F-F+RI", 1),
+            new WeightedRule("-F+F+RI", 1)
+    ));
+    stochasticRules.put('R', Arrays.asList(
+            new WeightedRule("F", 3),        // Favor straight growth
+            new WeightedRule("F[SL]F", 1),  // Reduce branching
+            new WeightedRule("F[LS]F", 1)
+    ));
+    stochasticRules.put('S', Arrays.asList(
+            new WeightedRule("F-I+", 2),    // Slightly increase simple growth
+            new WeightedRule("F", 1)        // Add direct, non-branching rules
+    ));
+    stochasticRules.put('L', Arrays.asList(
+            new WeightedRule("F+I-", 1),
+            new WeightedRule("F-I+", 1)
+    ));
 
-      Map<Character, List<WeightedRule>> stochasticRules = new HashMap<>();
-      stochasticRules.put('I', Arrays.asList(
-              new WeightedRule("+F-F-RX", 1),
-              new WeightedRule("-F+F-RX", 1),
-              new WeightedRule("-F-F+RX", 1)
-      ));
+    int iterations = 15;
+    double stepSize = combinedGeometry.getEnvelopeInternal().getWidth() * 0.01;
+    double beta = 15;
 
-      // X rules (equal probability)
-      stochasticRules.put('X', Arrays.asList(
-              new WeightedRule("+F-F+RI", 1),
-              new WeightedRule("-F+F+RI", 1)
-      ));
+    String riverPattern = new StochasticLSystemGenerator("I", stochasticRules, iterations).generate();
 
-      // R rules (equal probability)
-      stochasticRules.put('R', Arrays.asList(
-              new WeightedRule("F[SL]F", 1),
-              new WeightedRule("F[LS]F", 1)
-      ));
+    for (int t = 0; t < 3; t++) {
+      TurtleRenderer renderer = new TurtleRenderer(
+              generatedMapModel,
+              center.getX(),
+              center.getY(),
+              random.nextDouble() * 360,
+              stepSize * (1 - t * 0.15),
+              beta,
+              combinedGeometry
+      );
 
-      // S rules (equal probability)
-      stochasticRules.put('S', Arrays.asList(
-              new WeightedRule("F-I+", 1),
-              new WeightedRule("F+I-", 1)
-      ));
-
-      // L rules (equal probability)
-      stochasticRules.put('L', Arrays.asList(
-              new WeightedRule("F+I-", 1),
-              new WeightedRule("F-I+", 1)
-      ));
-
-      int iterations = 8 + random.nextInt(4);
-      double stepSize = polygon.getEnvelopeInternal().getWidth() * 0.02;
-      double beta = 45 + random.nextDouble() * 45; // Increased angle range [45,90]
-
-      String riverPattern = new StochasticLSystemGenerator("I", stochasticRules, iterations).generate();
-
-      for (int t = 0; t < 3; t++) {
-        TurtleRenderer renderer = new TurtleRenderer(
-                generatedMapModel,
-                center.getX(),
-                center.getY(),
-                random.nextDouble() * 360, // Random initial direction
-                stepSize * (1 - t * 0.15),
-                beta,
-                polygon
-        );
-
-        renderer.render(riverPattern);
-      }
+      renderer.render(riverPattern);
     }
   }
 

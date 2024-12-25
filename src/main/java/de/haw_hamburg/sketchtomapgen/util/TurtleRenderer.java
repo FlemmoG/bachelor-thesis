@@ -2,10 +2,7 @@ package de.haw_hamburg.sketchtomapgen.util;
 
 import de.haw_hamburg.sketchtomapgen.model.GeneratedMapModel;
 import javafx.scene.paint.Color;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.*;
 
 import java.util.Stack;
 
@@ -16,12 +13,12 @@ public class TurtleRenderer {
   private final double stepSize;
   private final double angleIncrement;
   private final Stack<TurtleState> stack;
-  private Polygon boundaryPolygon;
+  private Geometry boundaryPolygon;
   private GeometryFactory geometryFactory;
 
 
   public TurtleRenderer(GeneratedMapModel mapModel, double startX, double startY,
-                        double startAngle, double stepSize, double angleIncrement, Polygon boundary) {
+                          double startAngle, double stepSize, double angleIncrement, Geometry boundary) {
     this.mapModel = mapModel;
     this.x = startX;
     this.y = startY;
