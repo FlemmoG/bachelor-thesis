@@ -2,19 +2,26 @@ package de.haw_hamburg.sketchtomapgen.util;
 
 import de.haw_hamburg.sketchtomapgen.model.GeneratedMapModel;
 import javafx.scene.paint.Color;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
 
 import java.util.Stack;
 
 public class TurtleRenderer {
   private final GeneratedMapModel mapModel;
-  private int mapMinX, mapMinY, mapMaxX, mapMaxY;
   private double x, y;
   private double angle;
   private final double stepSize;
   private final double angleIncrement;
   private final Stack<TurtleState> stack;
+  private Polygon boundaryPolygon;
+  private GeometryFactory geometryFactory;
 
-  public TurtleRenderer(GeneratedMapModel mapModel, double startX, double startY, double startAngle, double stepSize, double angleIncrement) {
+
+  public TurtleRenderer(GeneratedMapModel mapModel, double startX, double startY,
+                        double startAngle, double stepSize, double angleIncrement, Polygon boundary) {
     this.mapModel = mapModel;
     this.x = startX;
     this.y = startY;
@@ -22,13 +29,8 @@ public class TurtleRenderer {
     this.stepSize = stepSize;
     this.angleIncrement = angleIncrement;
     this.stack = new Stack<>();
-  }
-
-  public void setMapBounds(int minX, int minY, int maxX, int maxY) {
-    this.mapMinX = minX;
-    this.mapMinY = minY;
-    this.mapMaxX = maxX;
-    this.mapMaxY = maxY;
+    this.boundaryPolygon = boundary;
+    this.geometryFactory = new GeometryFactory();
   }
 
 
@@ -63,7 +65,7 @@ public class TurtleRenderer {
     }
   }
 
-  private void drawLine(int startX, int startY, int endX, int endY, Color color) {
+  protected void drawLine(int startX, int startY, int endX, int endY, Color color) {
     int dx = Math.abs(endX - startX);
     int dy = Math.abs(endY - startY);
     int sx = startX < endX ? 1 : -1;
@@ -71,7 +73,11 @@ public class TurtleRenderer {
     int err = dx - dy;
 
     while (true) {
-      mapModel.addPixel(startX, startY, color);
+      // Check if current point is inside polygon
+      Point point = geometryFactory.createPoint(new Coordinate(startX, startY));
+      if (boundaryPolygon.contains(point)) {
+        mapModel.addPixel(startX, startY, color);
+      }
 
       if (startX == endX && startY == endY) break;
 

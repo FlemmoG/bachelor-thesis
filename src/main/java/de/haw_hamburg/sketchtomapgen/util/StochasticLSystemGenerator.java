@@ -9,7 +9,6 @@ public class StochasticLSystemGenerator {
   private Map<Character, List<WeightedRule>> rules;
   private int iterations;
   private Random random;
-  private static final int MAX_LENGTH = 10000; // Maximum length of the generated string
 
   public StochasticLSystemGenerator(String axiom, Map<Character, List<WeightedRule>> rules, int iterations) {
     this.axiom = axiom;
@@ -21,14 +20,10 @@ public class StochasticLSystemGenerator {
   public String generate() {
     String current = axiom;
 
-    for (int i = 0; i < iterations && current.length() < MAX_LENGTH; i++) {
+    for (int i = 0; i < iterations; i++) {
       StringBuilder next = new StringBuilder();
 
       for (char c : current.toCharArray()) {
-        // Check if adding more characters would exceed the maximum length
-        if (next.length() >= MAX_LENGTH) {
-          break;
-        }
 
         if (rules.containsKey(c)) {
           List<WeightedRule> possibleRules = rules.get(c);
@@ -47,13 +42,7 @@ public class StochasticLSystemGenerator {
               break;
             }
           }
-
-          // Check if adding the selected production would exceed the maximum length
-          if (next.length() + selectedProduction.length() <= MAX_LENGTH) {
-            next.append(selectedProduction);
-          } else {
-            break;
-          }
+          next.append(selectedProduction);
         } else {
           next.append(c);
         }

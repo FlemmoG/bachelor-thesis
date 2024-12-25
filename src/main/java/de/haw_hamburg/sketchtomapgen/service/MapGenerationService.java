@@ -58,93 +58,65 @@ public class MapGenerationService {
     List<Polygon> polygons = voronoiCellModels.getPolygons();
     if (polygons.isEmpty()) return;
 
-    // Get the envelope (bounding box) of all polygons
-    Envelope envelope = polygons.get(0).getEnvelopeInternal();
-    for (Polygon polygon : polygons) {
-      envelope.expandToInclude(polygon.getEnvelopeInternal());
-    }
-
-    // Create stochastic L-system rules
-    Map<Character, List<WeightedRule>> stochasticRules = new HashMap<>();
-
-    // I rules (each with equal probability 1/3)
-    stochasticRules.put('I', Arrays.asList(
-            new WeightedRule("+F-F-RX", 1),
-            new WeightedRule("-F+F-RX", 1),
-            new WeightedRule("-F-F+RX", 1)
-    ));
-
-    // X rules (equal probability)
-    stochasticRules.put('X', Arrays.asList(
-            new WeightedRule("+F-F+RI", 1),
-            new WeightedRule("-F+F+RI", 1)
-    ));
-
-    // R rules (equal probability)
-    stochasticRules.put('R', Arrays.asList(
-            new WeightedRule("F[SL]F", 1),
-            new WeightedRule("F[LS]F", 1)
-    ));
-
-    // S rules (equal probability)
-    stochasticRules.put('S', Arrays.asList(
-            new WeightedRule("F-I+", 1),
-            new WeightedRule("F+I-", 1)
-    ));
-
-    // L rules (equal probability)
-    stochasticRules.put('L', Arrays.asList(
-            new WeightedRule("F+I-", 1),
-            new WeightedRule("F-I+", 1)
-    ));
-
     Random random = new Random();
 
-    // Parameters from the stochastic L-system
-    int iterations = 8; //+ random.nextInt(4); // [8,11]
-    double beta = 15 + random.nextDouble() * 15; // [15,35]
-    double r = 11 + random.nextDouble() * 9; // [11,20]
-    double startX = 0; // x₀ = 0
-    double startY = 300 + random.nextDouble() * 400; // y₀ = [300,700]
-    double theta = 20 + random.nextDouble() * 40; // θ ∈ [20,60]
+    for (Polygon polygon : polygons) {
+      Point center = polygon.getCentroid();
 
-    // Create and render the river
-    StochasticLSystemGenerator lSystem = new StochasticLSystemGenerator(
-            "I", // Axiom
-            stochasticRules,
-            iterations
-    );
-    String riverPattern = lSystem.generate();
+      Map<Character, List<WeightedRule>> stochasticRules = new HashMap<>();
+      stochasticRules.put('I', Arrays.asList(
+              new WeightedRule("+F-F-RX", 1),
+              new WeightedRule("-F+F-RX", 1),
+              new WeightedRule("-F-F+RX", 1)
+      ));
 
-    // Scale step size based on envelope size
-    double stepSize = Math.min(envelope.getWidth(), envelope.getHeight()) * 0.02;
+      // X rules (equal probability)
+      stochasticRules.put('X', Arrays.asList(
+              new WeightedRule("+F-F+RI", 1),
+              new WeightedRule("-F+F+RI", 1)
+      ));
 
-    // Render with different thicknesses for more natural look
-    for (int t = 0; t < 3; t++) {
-      TurtleRenderer renderer = new TurtleRenderer(
-              generatedMapModel,
-              startX + envelope.getMinX(),
-              startY + envelope.getMinY(),
-              theta,
-              stepSize * (1 - t * 0.15),
-              beta
-      );
+      // R rules (equal probability)
+      stochasticRules.put('R', Arrays.asList(
+              new WeightedRule("F[SL]F", 1),
+              new WeightedRule("F[LS]F", 1)
+      ));
 
-      renderer.setMapBounds(
-              (int) envelope.getMinX(),
-              (int) envelope.getMinY(),
-              (int) envelope.getMaxX(),
-              (int) envelope.getMaxY()
-      );
+      // S rules (equal probability)
+      stochasticRules.put('S', Arrays.asList(
+              new WeightedRule("F-I+", 1),
+              new WeightedRule("F+I-", 1)
+      ));
 
-      renderer.render(riverPattern);
+      // L rules (equal probability)
+      stochasticRules.put('L', Arrays.asList(
+              new WeightedRule("F+I-", 1),
+              new WeightedRule("F-I+", 1)
+      ));
+
+      int iterations = 8 + random.nextInt(4);
+      double stepSize = polygon.getEnvelopeInternal().getWidth() * 0.02;
+      double beta = 45 + random.nextDouble() * 45; // Increased angle range [45,90]
+
+      String riverPattern = new StochasticLSystemGenerator("I", stochasticRules, iterations).generate();
+
+      for (int t = 0; t < 3; t++) {
+        TurtleRenderer renderer = new TurtleRenderer(
+                generatedMapModel,
+                center.getX(),
+                center.getY(),
+                random.nextDouble() * 360, // Random initial direction
+                stepSize * (1 - t * 0.15),
+                beta,
+                polygon
+        );
+
+        renderer.render(riverPattern);
+      }
     }
   }
 
-  public WritableImage getImage() {
-    if (generatedMapModel == null) {
-      throw new IllegalStateException("Map not generated");
-    }
+  public WritableImage getImage(){
     return generatedMapModel.getWritableImage();
   }
 
