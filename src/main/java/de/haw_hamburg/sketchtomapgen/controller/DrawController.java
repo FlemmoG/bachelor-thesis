@@ -14,8 +14,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 
 public class DrawController extends AbstractController{
@@ -49,7 +47,7 @@ public class DrawController extends AbstractController{
   @FXML
   private void openIconPlacementView(){
     try {
-      mainController.switchView(ViewRoutes.ICON_PLACEMENT_VIEW, segmentationService.getSketchModel());
+      navigationController.switchView(ViewRoutes.ICON_PLACEMENT_VIEW, segmentationService.getSketchModel());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

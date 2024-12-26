@@ -1,11 +1,12 @@
 package de.haw_hamburg.sketchtomapgen.controller;
 
 import de.haw_hamburg.sketchtomapgen.model.VoronoiCellModel;
-import de.haw_hamburg.sketchtomapgen.model.VoronoiCellModelCollection;
+import de.haw_hamburg.sketchtomapgen.model.collection.VoronoiCellModelCollection;
 import de.haw_hamburg.sketchtomapgen.service.MapGenerationService;
 import de.haw_hamburg.sketchtomapgen.util.DataReceiver;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.image.WritableImage;
 import javafx.stage.FileChooser;
@@ -19,20 +20,31 @@ import java.io.File;
 import static javafx.embed.swing.SwingFXUtils.fromFXImage;
 
 
-public class ResultController implements DataReceiver {
+public class ResultController extends AbstractController implements DataReceiver{
 
   @FXML
   private Canvas resultCanvas;
   private MapGenerationService mapGenerationService;
 
   public void initialize() {
-    this.mapGenerationService = new MapGenerationService();
+    this.mapGenerationService = new MapGenerationService((int) resultCanvas.getWidth(), (int) resultCanvas.getHeight());
   }
 
   @FXML
   private void handleRestart() {
-    System.out.println("Restarting the application...");
-    // Logic to restart the process (handled via routing)
+//    System.out.println("Restarting the application...");
+//    try {
+//      navigationController.switchView(ViewRoutes.DRAW_VIEW);
+//    } catch (IOException e) {
+//      throw new RuntimeException(e);
+//    }
+    GraphicsContext gc = resultCanvas.getGraphicsContext2D();
+    gc.clearRect(0, 0, resultCanvas.getWidth(), resultCanvas.getHeight());
+
+    mapGenerationService.generateMap();
+
+    WritableImage processedImage = mapGenerationService.getImage();
+    gc.drawImage(processedImage, 0, 0);
   }
 
   @FXML

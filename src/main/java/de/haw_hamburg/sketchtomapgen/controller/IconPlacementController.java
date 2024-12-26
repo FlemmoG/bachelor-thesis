@@ -65,7 +65,7 @@ public class IconPlacementController extends AbstractController implements DataR
   @FXML
   private void openResultView() {
     try {
-      mainController.switchView(ViewRoutes.RESULT_VIEW, iconPlacementService.getVoronoiCellModels());
+      navigationController.switchView(ViewRoutes.RESULT_VIEW, iconPlacementService.getVoronoiCellModels());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

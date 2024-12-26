@@ -1,9 +1,9 @@
 package de.haw_hamburg.sketchtomapgen.controller;
 
 public abstract class AbstractController {
-  protected MainController mainController;
+  protected NavigationController navigationController;
 
-  public void setMainController(MainController mainController) {
-    this.mainController = mainController;
+  public void setMainController(NavigationController navigationController) {
+    this.navigationController = navigationController;
   }
 }

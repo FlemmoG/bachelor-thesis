@@ -1,14 +1,11 @@
 package de.haw_hamburg.sketchtomapgen.app;
 
-import de.haw_hamburg.sketchtomapgen.controller.MainController;
+import de.haw_hamburg.sketchtomapgen.controller.NavigationController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
-
-import java.io.IOException;
 
 public class MainApp extends Application {
 
@@ -23,7 +20,7 @@ public class MainApp extends Application {
     Parent mainView = loader.load();
 
     // Controller holen und die Stage setzen
-    MainController controller = loader.getController();
+    NavigationController controller = loader.getController();
     controller.setStage(primaryStage);
 
     // Scene anzeigen

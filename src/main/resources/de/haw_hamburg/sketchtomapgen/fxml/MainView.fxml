@@ -4,7 +4,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="de.haw_hamburg.sketchtomapgen.controller.MainController"
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="de.haw_hamburg.sketchtomapgen.controller.NavigationController"
       alignment="CENTER" spacing="20" style="-fx-padding: 20;">
     <Label text="Sketch To Map Generator" style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
     <Button text="Start" fx:id="startButton" onAction="#openDrawView" style="-fx-font-size: 16px;"/>
