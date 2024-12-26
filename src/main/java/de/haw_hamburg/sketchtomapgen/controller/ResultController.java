@@ -94,32 +94,17 @@ public class ResultController extends AbstractController implements DataReceiver
   public void receiveData(Object data) {
     if (data instanceof VoronoiCellModelCollection voronoiCellModels) {
       mapGenerationService.initializeService(voronoiCellModels);
-      portrayModel(voronoiCellModels);
+      portrayResult();
     }
   }
 
-  private void portrayModel(VoronoiCellModelCollection voronoiCellModels) {
-    if (resultCanvas == null || voronoiCellModels == null) {
-      return;
-    }
-    var graphicsContext = resultCanvas.getGraphicsContext2D();
-    graphicsContext.clearRect(0, 0, resultCanvas.getWidth(), resultCanvas.getHeight());
+  private void portrayResult() {
+    GraphicsContext gc = resultCanvas.getGraphicsContext2D();
+    gc.clearRect(0, 0, resultCanvas.getWidth(), resultCanvas.getHeight());
 
-    for (VoronoiCellModel voronoiCellModel : voronoiCellModels) {
-      Polygon polygon = voronoiCellModel.getPolygon();
-      Envelope envelope = polygon.getEnvelopeInternal();
+    mapGenerationService.generateMap();
 
-      for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x++) {
-        for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y++) {
-          if (x >= 0 && x < resultCanvas.getWidth() && y >= 0 && y < resultCanvas.getHeight()) {
-            Coordinate point = new Coordinate(x, y);
-            if (polygon.contains(new GeometryFactory().createPoint(point))) {
-              graphicsContext.setFill(voronoiCellModel.getColor());
-              resultCanvas.getGraphicsContext2D().fillOval(x, y, 1, 1);
-            }
-          }
-        }
-      }
-    }
+    WritableImage processedImage = mapGenerationService.getImage();
+    gc.drawImage(processedImage, 0, 0);
   }
 }

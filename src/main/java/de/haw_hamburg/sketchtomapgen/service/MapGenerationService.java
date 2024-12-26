@@ -40,8 +40,8 @@ public class MapGenerationService {
     if (voronoiCellModels == null) {
       throw new IllegalStateException("Service not initialized");
     }
-
-    GeneratedMapModel generatedMapModel = new GeneratedMapModel(width, height);
+    generatedMapModel = new GeneratedMapModel(width, height);
+    addRiversToMap();
     for (VoronoiCellModel cell : voronoiCellModels) {
       MapCellGenerationStrategy strategy = strategyMap.get(cell.getIcon());
       if (strategy != null) {
@@ -50,8 +50,6 @@ public class MapGenerationService {
         throw new ImplementationMismatchException("No strategy implementation found for icon type: " + cell.getIcon());
       }
     }
-    this.generatedMapModel = generatedMapModel;
-    addRiversToMap();
   }
 
   private void addRiversToMap() {
