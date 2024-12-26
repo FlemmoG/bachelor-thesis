@@ -1,4 +1,4 @@
-package de.haw_hamburg.sketchtomapgen.util;
+package de.haw_hamburg.sketchtomapgen.util.l_system;
 
 import java.util.List;
 import java.util.Map;

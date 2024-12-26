@@ -1,14 +1,14 @@
 package de.haw_hamburg.sketchtomapgen.service;
 
-import com.auburn.fastnoiselite.FastNoiseLite;
 import de.haw_hamburg.sketchtomapgen.model.GeneratedMapModel;
 import de.haw_hamburg.sketchtomapgen.model.VoronoiCellModel;
 import de.haw_hamburg.sketchtomapgen.model.collection.VoronoiCellModelCollection;
 import de.haw_hamburg.sketchtomapgen.service.strategy.*;
 import de.haw_hamburg.sketchtomapgen.util.*;
-import javafx.scene.image.PixelWriter;
+import de.haw_hamburg.sketchtomapgen.util.l_system.StochasticLSystemGenerator;
+import de.haw_hamburg.sketchtomapgen.util.l_system.TurtleRenderer;
+import de.haw_hamburg.sketchtomapgen.util.l_system.WeightedRule;
 import javafx.scene.image.WritableImage;
-import javafx.scene.paint.Color;
 import org.apfloat.internal.ImplementationMismatchException;
 import org.locationtech.jts.geom.*;
 
@@ -68,26 +68,26 @@ public class MapGenerationService {
 
     Map<Character, List<WeightedRule>> stochasticRules = new HashMap<>();
     stochasticRules.put('I', Arrays.asList(
-            new WeightedRule("+F-F-RX", 1),
-            new WeightedRule("-F+F-RX", 1),
-            new WeightedRule("-F-F+RX", 1)
+            new WeightedRule("+FF-FF-RX", 1),
+            new WeightedRule("-FF+FF-RX", 1),
+            new WeightedRule("-FF-FF+RX", 1)
     ));
     stochasticRules.put('X', Arrays.asList(
-            new WeightedRule("+F-F+RI", 1),
-            new WeightedRule("-F+F+RI", 1)
+            new WeightedRule("+FF-FF+RI", 1),
+            new WeightedRule("-FF+FF+RI", 1)
     ));
     stochasticRules.put('R', Arrays.asList(
             new WeightedRule("F", 3),        // Favor straight growth
-            new WeightedRule("F[SL]F", 1),  // Reduce branching
-            new WeightedRule("F[LS]F", 1)
+            new WeightedRule("FF[SL]FF", 1),  // Reduce branching
+            new WeightedRule("FF[LS]FF", 1)
     ));
     stochasticRules.put('S', Arrays.asList(
-            new WeightedRule("F-I+", 2),    // Slightly increase simple growth
+            new WeightedRule("FF-I+", 2),
             new WeightedRule("F", 1)        // Add direct, non-branching rules
     ));
     stochasticRules.put('L', Arrays.asList(
-            new WeightedRule("F+I-", 1),
-            new WeightedRule("F-I+", 1)
+            new WeightedRule("FF+I-", 1),
+            new WeightedRule("FF-I+", 1)
     ));
 
     int iterations = 15;

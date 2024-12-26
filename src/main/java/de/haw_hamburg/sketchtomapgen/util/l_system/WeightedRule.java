@@ -1,4 +1,4 @@
-package de.haw_hamburg.sketchtomapgen.util;
+package de.haw_hamburg.sketchtomapgen.util.l_system;
 
 public class WeightedRule {
   String production;

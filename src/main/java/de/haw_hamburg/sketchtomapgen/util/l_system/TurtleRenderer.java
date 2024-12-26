@@ -1,4 +1,4 @@
-package de.haw_hamburg.sketchtomapgen.util;
+package de.haw_hamburg.sketchtomapgen.util.l_system;
 
 import de.haw_hamburg.sketchtomapgen.model.GeneratedMapModel;
 import javafx.scene.paint.Color;
@@ -90,7 +90,7 @@ public class TurtleRenderer {
     }
   }
 
-  private static class TurtleState {
+  protected static class TurtleState {
     double x, y, angle;
 
     TurtleState(double x, double y, double angle) {
