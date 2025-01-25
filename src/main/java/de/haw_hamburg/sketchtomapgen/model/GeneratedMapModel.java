@@ -38,6 +38,14 @@ public class GeneratedMapModel {
     return writableImage;
   }
 
+  public int getHeight() {
+    return height;
+  }
+
+  public int getWidth() {
+    return width;
+  }
+
   public void addAsset(int centerX, int centerY, Image asset, int size) {
     PixelWriter pixelWriter = writableImage.getPixelWriter();
 
