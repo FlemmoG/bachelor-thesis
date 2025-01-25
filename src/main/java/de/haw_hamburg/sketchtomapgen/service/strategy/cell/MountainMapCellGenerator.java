@@ -21,6 +21,7 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
     FastNoiseLite noiseGenerator = new FastNoiseLite();
     noiseGenerator.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
     noiseGenerator.SetSeed(new Random().nextInt());
+    noiseGenerator.SetFrequency(0.05f);
 
     // Zusätzlicher Noise für Blending
     FastNoiseLite blendNoiseGenerator = new FastNoiseLite();
@@ -90,15 +91,12 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
   // Farbzuordnung basierend auf der Höhe
   private Color getColorForHeight(double height) {
     if (height == 0) { // Flachland (nur 0)
-      System.out.println("Flach");
       return GlobalColors.TOTALLY_FLAT;
     } else if (height < 0.1) { // Hügelige Landschaft (mehr braun)
       return GlobalColors.MAINLY_FLAT.interpolate(GlobalColors.LITTLE_HILLY, height / 0.1);
     } else if (height < 0.3) { // Berge (weniger weiß, mehr braun)
-      System.out.println("hoch");
       return GlobalColors.LITTLE_HILLY.interpolate(GlobalColors.MAINLY_HILLY, (height - 0.1) / 0.2);
     } else { // Schnee-bedeckte Gipfel
-      System.out.println("sehr hoch");
       return GlobalColors.MAINLY_HILLY.interpolate(Color.WHITE, (height - 0.3) / 0.7);
     }
   }

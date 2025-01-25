@@ -9,6 +9,11 @@ public class GlobalColors {
   public static final Color LITTLE_HILLY = new Color(0.776, 0.788, 0.647, 1);
   public static final Color MAINLY_HILLY = new Color(0.976, 0.961, 0.871, 1);
 
+  public static final Color SHALLOW_WATER = new Color(0.439, 0.647, 0.820, 1);
+  public static final Color WATER_SURFACE = new Color(0.486, 0.741, 0.804, 1);
+
+  public static final Color DEEP_WATER = new Color(0.057, 0.247, 0.863, 1);
+
   private GlobalColors() {
     throw new UnsupportedOperationException("Utility class");
   }

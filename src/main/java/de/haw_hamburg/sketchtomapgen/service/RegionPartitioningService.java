@@ -12,6 +12,8 @@ import org.locationtech.jts.triangulate.VoronoiDiagramBuilder;
 
 import java.util.*;
 
+import static de.haw_hamburg.sketchtomapgen.util.Icon.WATER;
+
 public class RegionPartitioningService {
   private SketchModel sketchModel;
   private CellModelCollection voronoiCellModels;
@@ -37,6 +39,8 @@ public class RegionPartitioningService {
     CellModelCollection voronoiCellModels = new CellModelCollection();
     Random random = new Random();
 
+    Geometry nonCoveredArea = getTotalArea();
+
     for (int i = 0; i < concaveHullsForClusters.getNumGeometries(); i++) {
       Geometry concaveHull = concaveHullsForClusters.getGeometryN(i);
 
@@ -58,6 +62,7 @@ public class RegionPartitioningService {
           Color color = Color.rgb(random.nextInt(256), random.nextInt(256), random.nextInt(256), 0.5);
           CellModel cellModel = new CellModel((Polygon) concaveHull, color, icon, singlePoint);
           voronoiCellModels.add(cellModel);
+          nonCoveredArea = nonCoveredArea.difference(concaveHull);
         }
         continue;
       }
@@ -83,10 +88,36 @@ public class RegionPartitioningService {
           }
         }
       }
+
+      // Entferne den Bereich, der von der aktuellen Concave-Hülle abgedeckt wird
+      nonCoveredArea = nonCoveredArea.difference(concaveHull);
+    }
+
+    // Nachdem alle Concave-Hüllen bearbeitet wurden, erstellen wir die "Wasser"-Zelle für den verbleibenden Bereich
+    if (!nonCoveredArea.isEmpty()) {
+      if (nonCoveredArea instanceof Polygon polygon) {
+        Color waterColor = Color.rgb(0, 0, 255, 0.5); // Blau für Wasser
+        CellModel waterCellModel = new CellModel(polygon, waterColor, WATER, null);
+        voronoiCellModels.add(waterCellModel);
+      }
     }
 
     this.voronoiCellModels = voronoiCellModels;
   }
+
+  private Geometry getTotalArea() {
+    GeometryFactory geometryFactory = new GeometryFactory();
+    Coordinate[] coordinates = new Coordinate[] {
+            new Coordinate(0, 0),
+            new Coordinate(width, 0),
+            new Coordinate(width, height),
+            new Coordinate(0, height),
+            new Coordinate(0, 0)
+    };
+
+    return geometryFactory.createPolygon(coordinates);
+  }
+
 
   public WritableImage getImage() {
     WritableImage image = new WritableImage(width, height);
