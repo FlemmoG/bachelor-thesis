@@ -12,12 +12,12 @@ import org.locationtech.jts.geom.LineSegment;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SegmentationService {
+public class SketchService {
   private SketchModel sketchModel;
   private int width;
   private int height;
 
-  public SegmentationService(int width, int height) {
+  public SketchService(int width, int height) {
     this.width = width;
     this.height = height;
     sketchModel = new SketchModel();

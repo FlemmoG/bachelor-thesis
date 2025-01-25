@@ -1,7 +1,7 @@
 package de.haw_hamburg.sketchtomapgen.controller;
 
 import de.haw_hamburg.sketchtomapgen.model.SketchModel;
-import de.haw_hamburg.sketchtomapgen.service.IconPlacementService;
+import de.haw_hamburg.sketchtomapgen.service.RegionPartitioningService;
 import de.haw_hamburg.sketchtomapgen.util.AssetRoutes;
 import de.haw_hamburg.sketchtomapgen.util.DataReceiver;
 import de.haw_hamburg.sketchtomapgen.util.Icon;
@@ -42,12 +42,12 @@ public class IconPlacementController extends AbstractController implements DataR
   @FXML
   private Button noButton;
   private final int CUSTOM_CURSOR_SIZE = 32;
-  private IconPlacementService iconPlacementService;
+  private RegionPartitioningService regionPartitioningService;
   private Icon activeIcon = Icon.BLANK;
 
   @FXML
   private void initialize() {
-    iconPlacementService = new IconPlacementService((int) drawingCanvas.getWidth(), (int) drawingCanvas.getHeight());
+    regionPartitioningService = new RegionPartitioningService((int) drawingCanvas.getWidth(), (int) drawingCanvas.getHeight());
 
     addMouseEventHandlers();
   }
@@ -55,9 +55,9 @@ public class IconPlacementController extends AbstractController implements DataR
   private void finishPlacement() {
     GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
 
-    iconPlacementService.computeVoronoiFromIcons();
+    regionPartitioningService.computeVoronoiFromIcons();
 
-    WritableImage processedImage = iconPlacementService.getImage();
+    WritableImage processedImage = regionPartitioningService.getImage();
     gc.drawImage(processedImage, 0, 0);
     satisfactionSection.setVisible(true);
   }
@@ -65,7 +65,7 @@ public class IconPlacementController extends AbstractController implements DataR
   @FXML
   private void openResultView() {
     try {
-      navigationController.switchView(ViewRoutes.RESULT_VIEW, iconPlacementService.getVoronoiCellModels());
+      navigationController.switchView(ViewRoutes.RESULT_VIEW, regionPartitioningService.getVoronoiCellModels());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -146,7 +146,7 @@ public class IconPlacementController extends AbstractController implements DataR
                   e.getX() - CUSTOM_CURSOR_SIZE / 2.0,
                   e.getY() - CUSTOM_CURSOR_SIZE / 2.0
           );
-          iconPlacementService.addIcon(new Coordinate(e.getX(), e.getY()), Icon.TREE);
+          regionPartitioningService.addIcon(new Coordinate(e.getX(), e.getY()), Icon.TREE);
         }
         case WATER -> {
           // Draw water asset on the canvas at the mouse click position
@@ -155,7 +155,7 @@ public class IconPlacementController extends AbstractController implements DataR
                   e.getX() - CUSTOM_CURSOR_SIZE / 2.0,
                   e.getY() - CUSTOM_CURSOR_SIZE / 2.0
           );
-          iconPlacementService.addIcon(new Coordinate(e.getX(), e.getY()), Icon.WATER);
+          regionPartitioningService.addIcon(new Coordinate(e.getX(), e.getY()), Icon.WATER);
         }
         case VILLAGE -> {
           // Draw village asset on the canvas at the mouse click position
@@ -164,7 +164,7 @@ public class IconPlacementController extends AbstractController implements DataR
                   e.getX() - CUSTOM_CURSOR_SIZE / 2.0,
                   e.getY() - CUSTOM_CURSOR_SIZE / 2.0
           );
-          iconPlacementService.addIcon(new Coordinate(e.getX(), e.getY()), Icon.VILLAGE);
+          regionPartitioningService.addIcon(new Coordinate(e.getX(), e.getY()), Icon.VILLAGE);
         }
         case MOUNTAIN -> {
           // Draw mountain asset on the canvas at the mouse click position
@@ -173,7 +173,7 @@ public class IconPlacementController extends AbstractController implements DataR
                   e.getX() - CUSTOM_CURSOR_SIZE / 2.0,
                   e.getY() - CUSTOM_CURSOR_SIZE / 2.0
           );
-          iconPlacementService.addIcon(new Coordinate(e.getX(), e.getY()), Icon.MOUNTAIN);
+          regionPartitioningService.addIcon(new Coordinate(e.getX(), e.getY()), Icon.MOUNTAIN);
         }
         default -> {
           //ignore
@@ -185,7 +185,7 @@ public class IconPlacementController extends AbstractController implements DataR
   @Override
   public void receiveData(Object data) {
     if (data instanceof SketchModel sketchModel) {
-      iconPlacementService.initializeService(sketchModel);
+      regionPartitioningService.initializeService(sketchModel);
       portrayModel(sketchModel);
     }
   }

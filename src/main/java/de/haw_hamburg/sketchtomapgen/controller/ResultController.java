@@ -1,7 +1,6 @@
 package de.haw_hamburg.sketchtomapgen.controller;
 
-import de.haw_hamburg.sketchtomapgen.model.VoronoiCellModel;
-import de.haw_hamburg.sketchtomapgen.model.collection.VoronoiCellModelCollection;
+import de.haw_hamburg.sketchtomapgen.model.collection.CellModelCollection;
 import de.haw_hamburg.sketchtomapgen.service.MapGenerationService;
 import de.haw_hamburg.sketchtomapgen.util.DataReceiver;
 import javafx.fxml.FXML;
@@ -10,10 +9,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.image.WritableImage;
 import javafx.stage.FileChooser;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Polygon;
+
 import javax.imageio.ImageIO;
 import java.io.File;
 
@@ -92,7 +88,7 @@ public class ResultController extends AbstractController implements DataReceiver
 
   @Override
   public void receiveData(Object data) {
-    if (data instanceof VoronoiCellModelCollection voronoiCellModels) {
+    if (data instanceof CellModelCollection voronoiCellModels) {
       mapGenerationService.initializeService(voronoiCellModels);
       portrayResult();
     }

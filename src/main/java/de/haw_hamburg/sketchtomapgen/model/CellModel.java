@@ -5,14 +5,14 @@ import javafx.scene.paint.Color;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Polygon;
 
-public class VoronoiCellModel {
+public class CellModel {
 
   private Polygon polygon;
   private Color color;
   private Icon icon;
   private Coordinate centroid;
 
-  public VoronoiCellModel(Polygon polygon, Color color, Icon icon, Coordinate centroid) {
+  public CellModel(Polygon polygon, Color color, Icon icon, Coordinate centroid) {
     this.polygon = polygon;
     this.color = color;
     this.icon = icon;

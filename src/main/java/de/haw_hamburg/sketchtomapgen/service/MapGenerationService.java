@@ -1,9 +1,9 @@
 package de.haw_hamburg.sketchtomapgen.service;
 
 import de.haw_hamburg.sketchtomapgen.model.GeneratedMapModel;
-import de.haw_hamburg.sketchtomapgen.model.VoronoiCellModel;
-import de.haw_hamburg.sketchtomapgen.model.collection.VoronoiCellModelCollection;
-import de.haw_hamburg.sketchtomapgen.service.strategy.*;
+import de.haw_hamburg.sketchtomapgen.model.CellModel;
+import de.haw_hamburg.sketchtomapgen.model.collection.CellModelCollection;
+import de.haw_hamburg.sketchtomapgen.service.strategy.cell.*;
 import de.haw_hamburg.sketchtomapgen.util.*;
 import de.haw_hamburg.sketchtomapgen.util.l_system.StochasticLSystemGenerator;
 import de.haw_hamburg.sketchtomapgen.util.l_system.TurtleRenderer;
@@ -16,7 +16,7 @@ import java.util.*;
 
 public class MapGenerationService {
   private final Map<Icon, MapCellGenerationStrategy> strategyMap;
-  private VoronoiCellModelCollection voronoiCellModels;
+  private CellModelCollection voronoiCellModels;
   private GeneratedMapModel generatedMapModel;
   private final int width;
   private final int height;
@@ -32,7 +32,7 @@ public class MapGenerationService {
     strategyMap.put(Icon.VILLAGE, new VillageMapCellGenerator());
   }
 
-  public void initializeService(VoronoiCellModelCollection voronoiCellModels){
+  public void initializeService(CellModelCollection voronoiCellModels){
     this.voronoiCellModels = voronoiCellModels;
   }
 
@@ -42,7 +42,7 @@ public class MapGenerationService {
     }
     generatedMapModel = new GeneratedMapModel(width, height);
     addRiversToMap();
-    for (VoronoiCellModel cell : voronoiCellModels) {
+    for (CellModel cell : voronoiCellModels) {
       MapCellGenerationStrategy strategy = strategyMap.get(cell.getIcon());
       if (strategy != null) {
         strategy.generateMap(cell, generatedMapModel);

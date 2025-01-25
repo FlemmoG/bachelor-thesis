@@ -1,11 +1,10 @@
-package de.haw_hamburg.sketchtomapgen.service.strategy;
+package de.haw_hamburg.sketchtomapgen.service.strategy.cell;
 
 import com.auburn.fastnoiselite.FastNoiseLite;
 import de.haw_hamburg.sketchtomapgen.model.GeneratedMapModel;
-import de.haw_hamburg.sketchtomapgen.model.VoronoiCellModel;
+import de.haw_hamburg.sketchtomapgen.model.CellModel;
 import de.haw_hamburg.sketchtomapgen.util.AssetRoutes;
 import javafx.scene.image.Image;
-import javafx.scene.paint.Color;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -19,7 +18,7 @@ import java.util.Random;
 public class MountainMapCellGenerator implements MapCellGenerationStrategy {
 
   @Override
-  public void generateMap(VoronoiCellModel voronoiCellModel, GeneratedMapModel generatedMapModel) {
+  public void generateMap(CellModel cellModel, GeneratedMapModel generatedMapModel) {
     // Skalierungsvariablen
     final double mountainSizeFactor = 2;   // Multipliziert die Größe der Berge
     final double noiseThreshold = 0.55;      // Ab diesem Noise-Wert werden Berge gezeichnet
@@ -32,7 +31,7 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
     fastNoiseLite.SetFrequency(0.01f);
 
     // Voronoi-Polygon und dessen Envelope holen
-    Polygon polygon = voronoiCellModel.getPolygon();
+    Polygon polygon = cellModel.getPolygon();
     Envelope envelope = polygon.getEnvelopeInternal();
 
     // Mountain-Asset laden
