@@ -1,6 +1,6 @@
 package de.haw_hamburg.sketchtomapgen.controller;
 
-import de.haw_hamburg.sketchtomapgen.service.SegmentationService;
+import de.haw_hamburg.sketchtomapgen.service.SketchService;
 import de.haw_hamburg.sketchtomapgen.util.ViewRoutes;
 import javafx.fxml.FXML;
 import javafx.scene.Cursor;
@@ -34,12 +34,12 @@ public class DrawController extends AbstractController{
   private Button generateButton;
 
   private boolean isDrawing = true;
-  private SegmentationService segmentationService;
+  private SketchService sketchService;
 
   @FXML
   public void initialize() {
     drawingCanvas.setFocusTraversable(true);
-    segmentationService = new SegmentationService((int) drawingCanvas.getWidth(), (int) drawingCanvas.getHeight());
+    sketchService = new SketchService((int) drawingCanvas.getWidth(), (int) drawingCanvas.getHeight());
 
     addMouseEventHandlers();
     addKeyboardEventHandlers();
@@ -47,7 +47,7 @@ public class DrawController extends AbstractController{
   @FXML
   private void openIconPlacementView(){
     try {
-      navigationController.switchView(ViewRoutes.ICON_PLACEMENT_VIEW, segmentationService.getSketchModel());
+      navigationController.switchView(ViewRoutes.ICON_PLACEMENT_VIEW, sketchService.getSketchModel());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -60,9 +60,9 @@ public class DrawController extends AbstractController{
     GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
     gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
 
-    segmentationService.cleanSketchModel();
+    sketchService.cleanSketchModel();
 
-    WritableImage processedImage = segmentationService.getImage();
+    WritableImage processedImage = sketchService.getImage();
     gc.drawImage(processedImage, 0, 0);
     openIconPlacementView();
   }
@@ -97,13 +97,13 @@ public class DrawController extends AbstractController{
         gc.setLineWidth(PEN_RADIUS);
         gc.strokeLine(lastX[0], lastY[0], currentX, currentY);
 
-        segmentationService.addPixelsUsingInterpolation(lastXRounded, lastYRounded, currentX, currentY);
+        sketchService.addPixelsUsingInterpolation(lastXRounded, lastYRounded, currentX, currentY);
       } else {
         drawingCanvas.setCursor(Cursor.CLOSED_HAND);
         gc.setFill(Color.WHITESMOKE);
         gc.fillRect(currentX - ERASER_RADIUS / 2, currentY - ERASER_RADIUS / 2, ERASER_RADIUS, ERASER_RADIUS);
 
-        segmentationService.removePixels(currentX, currentY, (int) ERASER_RADIUS);
+        sketchService.removePixels(currentX, currentY, (int) ERASER_RADIUS);
       }
 
       lastX[0] = currentX;

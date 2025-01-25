@@ -1,8 +1,8 @@
 package de.haw_hamburg.sketchtomapgen.service;
 
 import de.haw_hamburg.sketchtomapgen.model.SketchModel;
-import de.haw_hamburg.sketchtomapgen.model.VoronoiCellModel;
-import de.haw_hamburg.sketchtomapgen.model.collection.VoronoiCellModelCollection;
+import de.haw_hamburg.sketchtomapgen.model.CellModel;
+import de.haw_hamburg.sketchtomapgen.model.collection.CellModelCollection;
 import de.haw_hamburg.sketchtomapgen.util.Icon;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
@@ -12,13 +12,13 @@ import org.locationtech.jts.triangulate.VoronoiDiagramBuilder;
 
 import java.util.*;
 
-public class IconPlacementService {
+public class RegionPartitioningService {
   private SketchModel sketchModel;
-  private VoronoiCellModelCollection voronoiCellModels;
+  private CellModelCollection voronoiCellModels;
   private int width;
   private int height;
 
-  public IconPlacementService(int width, int height){
+  public RegionPartitioningService(int width, int height){
     this.width = width;
     this.height = height;
   }
@@ -34,7 +34,7 @@ public class IconPlacementService {
     GeometryCollection concaveHullsForClusters = sketchModel.getConcaveHullsForClusters();
     Map<Coordinate, Icon> icons = sketchModel.getIcons();
 
-    VoronoiCellModelCollection voronoiCellModels = new VoronoiCellModelCollection();
+    CellModelCollection voronoiCellModels = new CellModelCollection();
     Random random = new Random();
 
     for (int i = 0; i < concaveHullsForClusters.getNumGeometries(); i++) {
@@ -56,8 +56,8 @@ public class IconPlacementService {
         Icon icon = icons.get(singlePoint);
         if (icon != null) {
           Color color = Color.rgb(random.nextInt(256), random.nextInt(256), random.nextInt(256), 0.5);
-          VoronoiCellModel voronoiCellModel = new VoronoiCellModel((Polygon) concaveHull, color, icon, singlePoint);
-          voronoiCellModels.add(voronoiCellModel);
+          CellModel cellModel = new CellModel((Polygon) concaveHull, color, icon, singlePoint);
+          voronoiCellModels.add(cellModel);
         }
         continue;
       }
@@ -78,8 +78,8 @@ public class IconPlacementService {
 
           if (icon != null) {
             Color color = Color.rgb(random.nextInt(256), random.nextInt(256), random.nextInt(256), 0.5);
-            VoronoiCellModel voronoiCellModel = new VoronoiCellModel(polygon, color, icon, nearestIconCoord);
-            voronoiCellModels.add(voronoiCellModel);
+            CellModel cellModel = new CellModel(polygon, color, icon, nearestIconCoord);
+            voronoiCellModels.add(cellModel);
           }
         }
       }
@@ -92,8 +92,8 @@ public class IconPlacementService {
     WritableImage image = new WritableImage(width, height);
     PixelWriter pixelWriter = image.getPixelWriter();
 
-    for (VoronoiCellModel voronoiCellModel : voronoiCellModels) {
-      Polygon polygon = voronoiCellModel.getPolygon();
+    for (CellModel cellModel : voronoiCellModels) {
+      Polygon polygon = cellModel.getPolygon();
       Envelope envelope = polygon.getEnvelopeInternal();
 
       for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x++) {
@@ -101,7 +101,7 @@ public class IconPlacementService {
           if (x >= 0 && x < width && y >= 0 && y < height) {
             Coordinate point = new Coordinate(x, y);
             if (polygon.contains(new GeometryFactory().createPoint(point))) {
-              pixelWriter.setColor(x, y, voronoiCellModel.getColor());
+              pixelWriter.setColor(x, y, cellModel.getColor());
             }
           }
         }
@@ -126,7 +126,7 @@ public class IconPlacementService {
     return nearestCoord;
   }
 
-  public VoronoiCellModelCollection getVoronoiCellModels() {
+  public CellModelCollection getVoronoiCellModels() {
     return voronoiCellModels;
   }
 }

@@ -25,7 +25,7 @@ public class NavigationController {
     // Link main controller
     Object controller = loader.getController();
     if (controller instanceof AbstractController) {
-      ((AbstractController) controller).setMainController(this); // MainController weitergeben
+      ((AbstractController) controller).setNavigationController(this); // MainController weitergeben
     }
 
     if (data != null && controller instanceof DataReceiver) {
