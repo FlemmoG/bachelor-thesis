@@ -70,9 +70,8 @@ public class TreeMapCellGenerator implements MapCellGenerationStrategy {
                       cellBoundary
               );
 
-              // Get tree pixel color
               int rgb = outputImage.getRGB(imgX, imgY);
-              Color treeColor = Color.rgb(
+              Color color = Color.rgb(
                       (rgb >> 16) & 0xFF,
                       (rgb >> 8) & 0xFF,
                       rgb & 0xFF
@@ -81,10 +80,10 @@ public class TreeMapCellGenerator implements MapCellGenerationStrategy {
               // Apply blending near edges
               if (distance < MAX_BLEND_DISTANCE) {
                 double blendFactor = distance / MAX_BLEND_DISTANCE;
-                treeColor = blendColors(treeColor, blendFactor);
+                color = blendColors(color, blendFactor);
               }
 
-              generatedMapModel.addPixel(x, y, treeColor);
+              generatedMapModel.addPixel(x, y, color);
             }
           }
         }
@@ -98,8 +97,8 @@ public class TreeMapCellGenerator implements MapCellGenerationStrategy {
 
   private Color blendColors(Color source, double blendFactor) {
     double easedFactor = blendFactor * blendFactor;
-    Random positionRandom = new Random((long) (blendFactor * 1000));
-    double noise = positionRandom.nextDouble() * NOISE_STRENGTH;
+    Random random = new Random((long) (blendFactor * 1000));
+    double noise = random.nextDouble() * NOISE_STRENGTH;
     double finalFactor = Math.min(1, Math.max(0, easedFactor + noise - NOISE_STRENGTH/2));
 
     return source.interpolate(GlobalColors.TOTALLY_FLAT, 1 - finalFactor);
