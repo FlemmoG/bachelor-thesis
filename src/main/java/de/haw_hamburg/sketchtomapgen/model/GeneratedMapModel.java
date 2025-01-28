@@ -1,6 +1,7 @@
 package de.haw_hamburg.sketchtomapgen.model;
 
 import javafx.scene.image.Image;
+import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
@@ -38,6 +39,10 @@ public class GeneratedMapModel {
     return writableImage;
   }
 
+  public boolean isWithinBounds(int x, int y) {
+    return x >= 0 && x < width && y >= 0 && y < height;
+  }
+
   public int getHeight() {
     return height;
   }
@@ -49,21 +54,37 @@ public class GeneratedMapModel {
   public void addAsset(int centerX, int centerY, Image asset, int size) {
     PixelWriter pixelWriter = writableImage.getPixelWriter();
 
-    // Skalierte Version des Assets
-    Image scaledAsset = new Image(
-            asset.getUrl(),
-            size,
-            size,
-            false,
-            true
-    );
+    // Skalierte Version des Assets erstellen ohne URL
+    WritableImage scaledAsset = new WritableImage(size, size);
+
+    // Scale the image manually
+    double scaleX = asset.getWidth() / size;
+    double scaleY = asset.getHeight() / size;
+
+    PixelWriter scaledWriter = scaledAsset.getPixelWriter();
+    PixelReader assetReader = asset.getPixelReader();
+
+    // Manually scale the image
+    for (int y = 0; y < size; y++) {
+      for (int x = 0; x < size; x++) {
+        int sourceX = (int) (x * scaleX);
+        int sourceY = (int) (y * scaleY);
+
+        // Ensure we don't exceed the source image boundaries
+        sourceX = Math.min(sourceX, (int)asset.getWidth() - 1);
+        sourceY = Math.min(sourceY, (int)asset.getHeight() - 1);
+
+        Color color = assetReader.getColor(sourceX, sourceY);
+        scaledWriter.setColor(x, y, color);
+      }
+    }
 
     int startX = centerX - size / 2;
     int startY = centerY - size / 2;
 
+    // Copy the scaled image to the final position
     for (int y = 0; y < size; y++) {
       for (int x = 0; x < size; x++) {
-        // Farbwerte per bilinearer Interpolation (falls nötig)
         Color assetColor = scaledAsset.getPixelReader().getColor(x, y);
 
         int worldX = startX + x;
