@@ -30,6 +30,7 @@ public class MapGenerationService {
     strategyMap.put(Icon.TREE, new TreeMapCellGenerator());
     strategyMap.put(Icon.WATER, new WaterMapCellGenerator());
     strategyMap.put(Icon.VILLAGE, new VillageMapCellGenerator());
+    strategyMap.put(Icon.OCEAN, new OceanMapCellGenerator());
   }
 
   public void initializeService(CellModelCollection voronoiCellModels){

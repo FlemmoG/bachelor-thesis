@@ -12,6 +12,7 @@ import org.locationtech.jts.triangulate.VoronoiDiagramBuilder;
 
 import java.util.*;
 
+import static de.haw_hamburg.sketchtomapgen.util.Icon.OCEAN;
 import static de.haw_hamburg.sketchtomapgen.util.Icon.WATER;
 
 public class RegionPartitioningService {
@@ -93,11 +94,11 @@ public class RegionPartitioningService {
       nonCoveredArea = nonCoveredArea.difference(concaveHull);
     }
 
-    // Nachdem alle Concave-Hüllen bearbeitet wurden, erstellen wir die "Wasser"-Zelle für den verbleibenden Bereich
+    // Nachdem alle Hüllen bearbeitet wurden, erstellen wir die "Wasser"-Zelle für den verbleibenden Bereich
     if (!nonCoveredArea.isEmpty()) {
       if (nonCoveredArea instanceof Polygon polygon) {
-        Color waterColor = Color.rgb(0, 0, 255, 0.5); // Blau für Wasser
-        CellModel waterCellModel = new CellModel(polygon, waterColor, WATER, null);
+        Color waterColor = Color.rgb(0, 0, 255, 0.5);
+        CellModel waterCellModel = new CellModel(polygon, waterColor, OCEAN, null);
         voronoiCellModels.add(waterCellModel);
       }
     }

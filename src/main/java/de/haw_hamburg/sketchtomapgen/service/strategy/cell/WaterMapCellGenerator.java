@@ -1,85 +1,92 @@
 package de.haw_hamburg.sketchtomapgen.service.strategy.cell;
 
-import com.auburn.fastnoiselite.FastNoiseLite;
 import de.haw_hamburg.sketchtomapgen.model.GeneratedMapModel;
 import de.haw_hamburg.sketchtomapgen.model.CellModel;
 import de.haw_hamburg.sketchtomapgen.util.GlobalColors;
 import javafx.scene.paint.Color;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.*;
+import org.locationtech.jts.operation.distance.DistanceOp;
 
-import java.util.Random;
 
 public class WaterMapCellGenerator implements MapCellGenerationStrategy {
   @Override
   public void generateMap(CellModel cellModel, GeneratedMapModel generatedMapModel) {
-    FastNoiseLite noiseGenerator = new FastNoiseLite();
-    noiseGenerator.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-    noiseGenerator.SetSeed(new Random().nextInt());
+    Polygon voronoiPoly = cellModel.getPolygon();
+    Coordinate centroid = cellModel.getCentroid();
 
-    Polygon cellPolygon = cellModel.getPolygon();
-    Envelope envelope = cellPolygon.getEnvelopeInternal();
-    double minX = cellPolygon.getEnvelopeInternal().getMinX();
-    double minY = cellPolygon.getEnvelopeInternal().getMinY();
-    double width = cellPolygon.getEnvelopeInternal().getWidth();
-    double height = cellPolygon.getEnvelopeInternal().getHeight();
+    // 1. Maximalen Radius bis zur Polygonkante berechnen
+    double maxRadius = calculateMaxRadius(voronoiPoly, centroid);
+    System.out.println(maxRadius);
 
-    for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x += 1) {
-      for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y += 1) {
-        double normalizedX = (double) x / generatedMapModel.getWidth();
-        double normalizedY = (double) y / generatedMapModel.getHeight();
-        Coordinate coordinate = new Coordinate(x, y);
+    // 2. Organischen See mit variabler Form erzeugen
+    Geometry lakeGeometry = createOrganicLakeShape(
+            voronoiPoly,
+            centroid,
+            maxRadius
+    );
 
-        if (cellPolygon.contains(new GeometryFactory().createPoint(coordinate))) {
+    // 3. Pixelweise Rendering
+    renderLake(generatedMapModel, voronoiPoly, lakeGeometry);
+  }
 
-          double distanceToEdge = calculateSmoothDistanceToEdge(coordinate, cellPolygon, width, height);
+  private double calculateMaxRadius(Polygon polygon, Coordinate centroid) {
+    GeometryFactory geometryFactory = new GeometryFactory();
+
+    Point centroidPoint = geometryFactory.createPoint(centroid);
+    LineString boundary = polygon.getExteriorRing();
+
+    DistanceOp distanceOp = new DistanceOp(boundary, centroidPoint);
+    Coordinate[] closestPoints = distanceOp.nearestPoints();
+
+    return centroidPoint.distance(geometryFactory.createPoint(closestPoints[0]));
+  }
+
+  private Geometry createOrganicLakeShape(Geometry boundary, Coordinate center, double baseRadius) {
+    GeometryFactory gf = new GeometryFactory();
+
+    // Parameter für Radiusvariation
+    final double minRadiusFactor = 0.1;  // Minimaler Faktor für Radiusvariation
+    final double maxRadiusFactor = 0.5;  // Maximaler Faktor für Radiusvariation
+    final int circleSegments = 32;
+
+    Coordinate[] circleCoords = new Coordinate[circleSegments + 1];
+
+    // Kreis-Koordinaten berechnen
+    for (int i = 0; i < circleSegments; i++) {
+      double angle = 2 * Math.PI * i / circleSegments;
+
+      double radiusVariation = minRadiusFactor + maxRadiusFactor * Math.random();
+      double effectiveRadius = baseRadius * radiusVariation;
+
+      circleCoords[i] = new Coordinate(
+              center.x + effectiveRadius * Math.cos(angle),
+              center.y + effectiveRadius * Math.sin(angle)
+      );
+    }
+
+    circleCoords[circleSegments] = circleCoords[0];
+    Geometry rawLakeShape = gf.createPolygon(gf.createLinearRing(circleCoords), null);
+
+    return rawLakeShape.intersection(boundary);
+  }
 
 
-          double noiseX = normalizedX * width + minX;
-          double noiseY = normalizedY * height + minY;
+  private void renderLake(GeneratedMapModel model, Geometry boundary, Geometry lake) {
+    Envelope env = boundary.getEnvelopeInternal();
+    GeometryFactory gf = new GeometryFactory();
 
+    for(int x = (int)env.getMinX(); x <= env.getMaxX(); x++) {
+      for(int y = (int)env.getMinY(); y <= env.getMaxY(); y++) {
+        Coordinate c = new Coordinate(x, y);
+        Point p = gf.createPoint(c);
 
-          float primaryNoiseValue = noiseGenerator.GetNoise((float) noiseX, (float) noiseY);
-
-          // Weicher Übergang durch Gewichtung mit Abstand zum Rand
-          double smoothedHeight = interpolateHeight(
-                  primaryNoiseValue,
-                  distanceToEdge
-          );
-
-          // Bestimme die Höhe basierend auf dem smoothedHeight
-          Color heightColor = getColorForHeight(smoothedHeight);
-
-          // Setze die Pixel im generierten Kartenmodell
-          generatedMapModel.addPixel(x, y, heightColor);
+        if(boundary.contains(p)) {
+          Color color = lake.contains(p)
+                  ? GlobalColors.WATER_SURFACE
+                  : GlobalColors.TOTALLY_FLAT;
+          model.addPixel(x, y, color);
         }
       }
-    }
-  }
-
-  private double calculateSmoothDistanceToEdge(Coordinate point, Polygon polygon, double width, double height) {
-    double maxDistance = Math.min(width, height);
-    double minDistanceToEdge = polygon.getBoundary().distance(new GeometryFactory().createPoint(point));
-    double normalizedDistance = Math.min(1.0, minDistanceToEdge / maxDistance);
-    return Math.pow(normalizedDistance, 0.5);
-  }
-
-  private double interpolateHeight(float primaryNoise, double edgeDistance) {
-    double combinedNoise = primaryNoise * (1 - edgeDistance) * edgeDistance;
-    return combinedNoise * edgeDistance;
-  }
-
-  private Color getColorForHeight(double height) {
-    if (height == 0.0) {
-      return GlobalColors.WATER_SURFACE.interpolate(GlobalColors.TOTALLY_FLAT, 0.5);
-    } else if (height < 0.05) {
-      return GlobalColors.SHALLOW_WATER.interpolate(GlobalColors.WATER_SURFACE, height / 0.05);
-    } else if (height < 0.18) {
-      return GlobalColors.WATER_SURFACE.interpolate(GlobalColors.DEEP_WATER, (height - 0.05) / 0.05);
-    } else {
-      return GlobalColors.DEEP_WATER.interpolate(Color.WHITE, (height - 0.1) / 0.9);
     }
   }
 }
