@@ -3,104 +3,111 @@ package de.haw_hamburg.sketchtomapgen.service.strategy.cell;
 import com.auburn.fastnoiselite.FastNoiseLite;
 import de.haw_hamburg.sketchtomapgen.model.GeneratedMapModel;
 import de.haw_hamburg.sketchtomapgen.model.CellModel;
+import de.haw_hamburg.sketchtomapgen.service.strategy.cell.MapCellGenerationStrategy;
 import de.haw_hamburg.sketchtomapgen.util.AssetRoutes;
 import de.haw_hamburg.sketchtomapgen.util.GlobalColors;
 import javafx.scene.image.Image;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class MountainMapCellGenerator implements MapCellGenerationStrategy {
+
   @Override
-  public void generateMap(CellModel cellModel, GeneratedMapModel generatedMapModel) {
-    FastNoiseLite noiseGenerator = new FastNoiseLite();
-    noiseGenerator.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
-    noiseGenerator.SetSeed(new Random().nextInt());
+  public void generateMap(CellModel voronoiCellModel, GeneratedMapModel generatedMapModel) {
+    // Skalierungsvariablen
+    final double mountainSizeFactor = 2;   // Multipliziert die Größe der Berge
+    final double noiseThreshold = 0.55;      // Ab diesem Noise-Wert werden Berge gezeichnet
+    final int stepSize = 30;                // Schrittweite für die Iteration (größere Werte = weniger Berge)
+    final int minDistanceBetweenAssets = 40; // Minimaler Abstand zwischen zwei Bergen
 
-    // Zusätzlicher Noise für Blending
-    FastNoiseLite blendNoiseGenerator = new FastNoiseLite();
-    blendNoiseGenerator.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-    blendNoiseGenerator.SetSeed(new Random().nextInt());
-    blendNoiseGenerator.SetFrequency(0.06f);
+    // Noise-Generator initialisieren
+    FastNoiseLite fastNoiseLite = new FastNoiseLite(new Random().nextInt());
+    fastNoiseLite.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
+    fastNoiseLite.SetFrequency(0.01f);
 
-    Polygon cellPolygon = cellModel.getPolygon();
-    Envelope envelope = cellPolygon.getEnvelopeInternal();
-    double minX = cellPolygon.getEnvelopeInternal().getMinX();
-    double minY = cellPolygon.getEnvelopeInternal().getMinY();
-    double width = cellPolygon.getEnvelopeInternal().getWidth();
-    double height = cellPolygon.getEnvelopeInternal().getHeight();
+    // Voronoi-Polygon und dessen Envelope holen
+    Polygon polygon = voronoiCellModel.getPolygon();
+    Envelope envelope = polygon.getEnvelopeInternal();
 
-    int resolution = generatedMapModel.getWidth();
+    // Mountain-Asset laden
+    URL mountainImageUrl = getClass().getResource(AssetRoutes.MOUNTAINS_ASSET);
+    Image mountainImage = new Image(String.valueOf(mountainImageUrl));
 
-    for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x += 1) {
-      for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y += 1) {
-        double normalizedX = (double) x / resolution;
-        double normalizedY = (double) y / resolution;
-        Coordinate coordinate = new Coordinate(x, y);
+    Random random = new Random();
 
-        if (cellPolygon.contains(new GeometryFactory().createPoint(coordinate))) {
+    // Liste zur Nachverfolgung der gezeichneten Asset-Positionen
+    List<Coordinate> drawnAssets = new ArrayList<>();
 
-          double distanceToEdge = calculateSmoothDistanceToEdge(coordinate, cellPolygon, width, height);
+    for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x++) {
+      for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y++) {
+        Coordinate point = new Coordinate(x, y);
+        if (polygon.contains(new GeometryFactory().createPoint(point))) {
+          generatedMapModel.addPixel(x,y, GlobalColors.TOTALLY_FLAT);
+        }
+      }
+    }
 
+    // Schleife über alle Punkte im Envelope mit festem Schritt (stepSize)
+    for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x += stepSize) {
+      for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y += stepSize) {
+        Coordinate point = new Coordinate(x, y);
 
-          double noiseX = normalizedX * width + minX;
-          double noiseY = normalizedY * height + minY;
+        // Noise-Wert für die aktuelle Position berechnen
+        float noiseValue = fastNoiseLite.GetNoise(x, y);
 
+        // Noise-Wert in den Bereich [0, 1] normalisieren
+        float normalizedValue = (noiseValue + 1.0f) / 2.0f;
 
-          float primaryNoiseValue = noiseGenerator.GetNoise((float) noiseX, (float) noiseY);
-          float blendNoiseValue = blendNoiseGenerator.GetNoise((float) noiseX, (float) noiseY);
+        // Nur zeichnen, wenn der Noise-Wert hoch genug ist
+        if (normalizedValue > noiseThreshold) {
+          // Prüfen, ob der Punkt zu nahe an einem anderen Asset liegt
+          boolean isTooClose = drawnAssets.stream()
+                  .anyMatch(existing -> point.distance(existing) < minDistanceBetweenAssets);
 
-          // Weicher Übergang durch Gewichtung mit Abstand zum Rand
-          double smoothedHeight = interpolateHeight(
-                  primaryNoiseValue,
-                  blendNoiseValue,
-                  distanceToEdge
-          );
+          if (!isTooClose && polygon.contains(new GeometryFactory().createPoint(point))) {
+            int mountainSize = (int) (5 + Math.pow(normalizedValue, 3) * 100 * mountainSizeFactor);
 
-          // Bestimme die Höhe basierend auf dem smoothedHeight
-          Color heightColor = getColorForHeight(smoothedHeight);
+            // Randomly flip the image
+            Image finalMountainImage = random.nextBoolean() ? flipImageHorizontally(mountainImage) : mountainImage;
 
-          // Setze die Pixel im generierten Kartenmodell
-          generatedMapModel.addPixel(x, y, heightColor);
+            // Berg zeichnen
+            generatedMapModel.addAsset((int) point.getX(), (int) point.getY(), finalMountainImage, mountainSize);
+
+            // Gezeichnete Position speichern
+            drawnAssets.add(point);
+          }
         }
       }
     }
   }
 
-  private double calculateSmoothDistanceToEdge(Coordinate point, Polygon polygon, double width, double height) {
-    double maxDistance = Math.min(width, height);
-    double minDistanceToEdge = polygon.getBoundary().distance(new GeometryFactory().createPoint(point));
-    double normalizedDistance = Math.min(1.0, minDistanceToEdge / maxDistance);
-    return Math.pow(normalizedDistance, 0.5);
-  }
+  private Image flipImageHorizontally(Image image) {
+    int width = (int) image.getWidth();
+    int height = (int) image.getHeight();
 
-  private double interpolateHeight(float primaryNoise, float blendNoise, double edgeDistance) {
-    // Kombination von primärem Noise und blendendem Noise
-    double combinedNoise = primaryNoise * (1 - edgeDistance) + blendNoise * edgeDistance;
+    WritableImage output = new WritableImage(width, height);
+    PixelWriter writer = output.getPixelWriter();
+    PixelReader reader = image.getPixelReader();
 
-    // Endgültige Höhe basierend auf der Gewichtung und der Distanz
-    return combinedNoise * edgeDistance;
-  }
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        Color color = reader.getColor(x, y);
 
-  // Farbzuordnung basierend auf der Höhe
-  private Color getColorForHeight(double height) {
-    if (height == 0) { // Flachland (nur 0)
-      System.out.println("Flach");
-      return GlobalColors.TOTALLY_FLAT;
-    } else if (height < 0.1) { // Hügelige Landschaft (mehr braun)
-      return GlobalColors.MAINLY_FLAT.interpolate(GlobalColors.LITTLE_HILLY, height / 0.1);
-    } else if (height < 0.3) { // Berge (weniger weiß, mehr braun)
-      System.out.println("hoch");
-      return GlobalColors.LITTLE_HILLY.interpolate(GlobalColors.MAINLY_HILLY, (height - 0.1) / 0.2);
-    } else { // Schnee-bedeckte Gipfel
-      System.out.println("sehr hoch");
-      return GlobalColors.MAINLY_HILLY.interpolate(Color.WHITE, (height - 0.3) / 0.7);
+        writer.setColor(width - 1 - x, y, color);
+      }
     }
+
+    return output;
   }
 }
-
