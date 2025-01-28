@@ -44,17 +44,18 @@ public class WaterMapCellGenerator implements MapCellGenerationStrategy {
   private Geometry createOrganicLakeShape(Geometry boundary, Coordinate center, double baseRadius) {
     GeometryFactory gf = new GeometryFactory();
 
-    // Parameter für Radiusvariation
-    final double minRadiusFactor = 0.1;  // Minimaler Faktor für Radiusvariation
-    final double maxRadiusFactor = 0.5;  // Maximaler Faktor für Radiusvariation
-    final int circleSegments = 32;
+    // Adjusted parameters for smoother variation
+    final double minRadiusFactor = 0.7;  // Increased minimal radius factor
+    final double maxRadiusFactor = 0.3;  // Reduced maximum variation
+    final int circleSegments = 64;       // Increased segments for smoother outline
 
     Coordinate[] circleCoords = new Coordinate[circleSegments + 1];
 
-    // Kreis-Koordinaten berechnen
+    // Calculate circle coordinates with smoother variation
     for (int i = 0; i < circleSegments; i++) {
       double angle = 2 * Math.PI * i / circleSegments;
 
+      // Apply smoother radius variation
       double radiusVariation = minRadiusFactor + maxRadiusFactor * Math.random();
       double effectiveRadius = baseRadius * radiusVariation;
 

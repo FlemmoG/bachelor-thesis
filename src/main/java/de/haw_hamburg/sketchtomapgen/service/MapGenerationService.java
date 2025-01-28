@@ -8,10 +8,20 @@ import de.haw_hamburg.sketchtomapgen.util.*;
 import de.haw_hamburg.sketchtomapgen.util.l_system.StochasticLSystemGenerator;
 import de.haw_hamburg.sketchtomapgen.util.l_system.TurtleRenderer;
 import de.haw_hamburg.sketchtomapgen.util.l_system.WeightedRule;
-import javafx.scene.image.WritableImage;
+import javafx.scene.Group;
+import javafx.scene.effect.BlendMode;
+import javafx.scene.effect.ColorAdjust;
+import javafx.scene.effect.GaussianBlur;
+import javafx.scene.image.*;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.CycleMethod;
+import javafx.scene.paint.RadialGradient;
+import javafx.scene.paint.Stop;
+import javafx.scene.shape.Rectangle;
 import org.apfloat.internal.ImplementationMismatchException;
 import org.locationtech.jts.geom.*;
 
+import java.net.URL;
 import java.util.*;
 
 public class MapGenerationService {
@@ -51,6 +61,50 @@ public class MapGenerationService {
         throw new ImplementationMismatchException("No strategy implementation found for icon type: " + cell.getIcon());
       }
     }
+
+    addFiltersToImage(generatedMapModel);
+  }
+
+  private void addFiltersToImage(GeneratedMapModel generatedMapModel) {
+    WritableImage noisyImage = addNoise(generatedMapModel.getWritableImage(), 0.1);
+
+    ColorAdjust colorAdjust = new ColorAdjust();
+    colorAdjust.setHue(-0.05);  // Leichter Gelbstich
+    colorAdjust.setSaturation(-0.7); // Entsättigung
+    colorAdjust.setBrightness(0.15); // Aufhellung
+    ImageView imageView = new ImageView(noisyImage);
+    imageView.setEffect(colorAdjust);
+
+    URL textureUrl = getClass().getResource(AssetRoutes.PARCHMENT_TEXTURE);
+    Image parchmentTexture = new Image(String.valueOf(textureUrl));
+    ImageView textureView = new ImageView(parchmentTexture);
+    textureView.setBlendMode(BlendMode.MULTIPLY); // Farben interagieren
+    textureView.setOpacity(0.4); // Transparenz anpassen
+
+    // Vignette-Effekt
+    Rectangle vignette = new Rectangle(generatedMapModel.getWidth(), generatedMapModel.getHeight());
+    RadialGradient gradient = new RadialGradient(
+            0, 0,
+            0.5, 0.5,
+            0.8,
+            true,
+            CycleMethod.NO_CYCLE,
+            new Stop(0, Color.TRANSPARENT),
+            new Stop(1, Color.rgb(0, 0, 0, 0.5)) // Rand dunkel
+    );
+    vignette.setFill(gradient);
+    vignette.setBlendMode(BlendMode.MULTIPLY);
+
+    Group processingGroup = new Group();
+    processingGroup.getChildren().addAll(
+            imageView,
+            textureView,
+            vignette
+    );
+
+
+    WritableImage finalImage = processingGroup.snapshot(null, null);
+    generatedMapModel.setWritableImage(finalImage);
   }
 
   private void addRiversToMap() {
@@ -108,6 +162,31 @@ public class MapGenerationService {
 
       renderer.render(riverPattern);
     }
+  }
+
+  private WritableImage addNoise(WritableImage image, double intensity) {
+    PixelReader reader = image.getPixelReader();
+    WritableImage noisyImage = new WritableImage(reader, (int)image.getWidth(), (int)image.getHeight());
+    PixelWriter writer = noisyImage.getPixelWriter();
+
+    Random rand = new Random();
+    for (int y = 0; y < image.getHeight(); y++) {
+      for (int x = 0; x < image.getWidth(); x++) {
+        Color color = reader.getColor(x, y);
+        // Füge zufälliges Rauschen hinzu
+        double noise = (rand.nextDouble() - 0.5) * intensity;
+        writer.setColor(x, y, Color.color(
+                clamp(color.getRed() + noise),
+                clamp(color.getGreen() + noise),
+                clamp(color.getBlue() + noise)
+        ));
+      }
+    }
+    return noisyImage;
+  }
+
+  private double clamp(double value) {
+    return Math.max(0, Math.min(1, value));
   }
 
   public WritableImage getImage(){
