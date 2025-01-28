@@ -41,7 +41,7 @@ public class MapGenerationService {
       throw new IllegalStateException("Service not initialized");
     }
     generatedMapModel = new GeneratedMapModel(width, height);
-    addRiversToMap();
+    //addRiversToMap();
     for (CellModel cell : voronoiCellModels) {
       MapCellGenerationStrategy strategy = strategyMap.get(cell.getIcon());
       if (strategy != null) {
