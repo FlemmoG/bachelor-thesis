@@ -89,12 +89,12 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
 
   // Farbzuordnung basierend auf der Höhe
   private Color getColorForHeight(double height) {
-    if (height == 0) { // Flachland (nur 0)
+    if (height < 0.2) { // Flachland (nur 0)
       System.out.println("Flach");
       return GlobalColors.TOTALLY_FLAT;
-    } else if (height < 0.1) { // Hügelige Landschaft (mehr braun)
+    } else if (height < 0.3) { // Hügelige Landschaft (mehr braun)
       return GlobalColors.MAINLY_FLAT.interpolate(GlobalColors.LITTLE_HILLY, height / 0.1);
-    } else if (height < 0.3) { // Berge (weniger weiß, mehr braun)
+    } else if (height < 0.35) { // Berge (weniger weiß, mehr braun)
       System.out.println("hoch");
       return GlobalColors.LITTLE_HILLY.interpolate(GlobalColors.MAINLY_HILLY, (height - 0.1) / 0.2);
     } else { // Schnee-bedeckte Gipfel

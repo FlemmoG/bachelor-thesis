@@ -1,73 +1,101 @@
 package de.haw_hamburg.sketchtomapgen.service.strategy.cell;
 
-import com.auburn.fastnoiselite.FastNoiseLite;
+import com.github.sjcasey21.wavefunctioncollapse.Main;
+import com.github.sjcasey21.wavefunctioncollapse.OverlappingModel;
+import com.github.sjcasey21.wavefunctioncollapse.SimpleTiledModel;
 import de.haw_hamburg.sketchtomapgen.model.GeneratedMapModel;
 import de.haw_hamburg.sketchtomapgen.model.CellModel;
 import de.haw_hamburg.sketchtomapgen.util.AssetRoutes;
-import javafx.scene.image.Image;
+import javafx.scene.paint.Color;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
 
+import javax.imageio.ImageIO;
+
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 public class VillageMapCellGenerator implements MapCellGenerationStrategy {
   @Override
   public void generateMap(CellModel cellModel, GeneratedMapModel generatedMapModel) {
-    // Skalierungsvariablen
-    final double mountainSizeFactor = 0.8;   // Multipliziert die Größe der Berge
-    final double noiseThreshold = 0.3;      // Ab diesem Noise-Wert werden Berge gezeichnet
-    final int stepSize = 30;                // Schrittweite für die Iteration (größere Werte = weniger Berge)
-    final int minDistanceBetweenAssets = 40; // Minimaler Abstand zwischen zwei Bergen
+    try {
+      // Lade das Initialisierungsbild
+      URL wfcInitPictureUrl = getClass().getResource(AssetRoutes.VILLAGE_TILE_ASSET);
+      BufferedImage inputImage = ImageIO.read(wfcInitPictureUrl);
 
-    // Noise-Generator initialisieren
-    FastNoiseLite fastNoiseLite = new FastNoiseLite(new Random().nextInt());
-    fastNoiseLite.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
-    fastNoiseLite.SetFrequency(0.01f);
+      Polygon cellPolygon = cellModel.getPolygon();
+      Envelope envelope = cellPolygon.getEnvelopeInternal();
 
-    // Voronoi-Polygon und dessen Envelope holen
-    Polygon polygon = cellModel.getPolygon();
-    Envelope envelope = polygon.getEnvelopeInternal();
+      int outputWidth = (int) Math.ceil(envelope.getMaxX() - envelope.getMinX());
+      int outputHeight = (int) Math.ceil(envelope.getMaxY() - envelope.getMinY());
 
-    // Mountain-Asset laden
-    URL mountainImageUrl = getClass().getResource(AssetRoutes.VILLAGE_ASSET);
-    Image mountainImage = new javafx.scene.image.Image(String.valueOf(mountainImageUrl));
+      // Parameter für das Overlapping Model
+      int N = 3;
+      boolean periodicInput = true;
+      boolean periodicOutput = false;
+      int symmetry = 1;
+      int ground = 102;
 
-    // Liste zur Nachverfolgung der gezeichneten Asset-Positionen
-    List<Coordinate> drawnAssets = new ArrayList<>();
+      System.out.println(outputHeight  + " " + outputWidth);
 
-    // Schleife über alle Punkte im Envelope mit festem Schritt (stepSize)
-    for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x += stepSize) {
-      for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y += stepSize) {
-        Coordinate point = new Coordinate(x, y);
+      // Erstelle das OverlappingModel
+      OverlappingModel model = new OverlappingModel(
+              inputImage,
+              N,
+              256,
+              256,
+              periodicInput,
+              periodicOutput,
+              symmetry,
+              ground
+      );
 
-        // Noise-Wert für die aktuelle Position berechnen
-        float noiseValue = fastNoiseLite.GetNoise(x, y);
+      // Starte die WFC-Generierung
+      boolean success = model.run(new Random().nextInt(), 0);
+      if (success) {
+        BufferedImage outputImageOg = model.graphics();
+        BufferedImage outputImage = new BufferedImage(outputWidth, outputHeight, outputImageOg.getType());
+        Graphics2D g2d = outputImage.createGraphics();
+        int size = Math.max(outputWidth, outputHeight);
+        g2d.drawImage(outputImageOg, 0, 0, size, size, null);
+        g2d.dispose();
 
-        // Noise-Wert in den Bereich [0, 1] normalisieren
-        float normalizedValue = (noiseValue + 1.0f) / 2.0f;
+        // Iteriere über die Koordinaten im Bereich des Polygons
+        for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x++) {
+          for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y++) {
+            // Punkt erstellen und prüfen, ob er im Polygon liegt
+            if (cellPolygon.contains(new GeometryFactory().createPoint(new Coordinate(x, y)))) {
+              // Farbinformation aus dem generierten Bild holen
+              int imgX = Math.floorMod(x, outputImage.getWidth()); // Um sicherzustellen, dass x innerhalb der Bildbreite liegt
+              int imgY = Math.floorMod(y, outputImage.getHeight()); // Um sicherzustellen, dass y innerhalb der Bildhöhe liegt
+              int rgb = outputImage.getRGB(imgX, imgY);
+              Color color = Color.rgb(
+                      (rgb >> 16) & 0xFF,
+                      (rgb >> 8) & 0xFF,
+                      rgb & 0xFF
+              );
 
-        // Nur zeichnen, wenn der Noise-Wert hoch genug ist
-        if (normalizedValue > noiseThreshold) {
-          // Prüfen, ob der Punkt zu nahe an einem anderen Asset liegt
-          boolean isTooClose = drawnAssets.stream()
-                  .anyMatch(existing -> point.distance(existing) < minDistanceBetweenAssets);
-
-          if (!isTooClose && polygon.contains(new GeometryFactory().createPoint(point))) {
-            int mountainSize = (int) (5 + Math.pow(normalizedValue, 3) * 100 * mountainSizeFactor);
-
-            // Berg zeichnen
-            generatedMapModel.addAsset((int) point.getX(), (int) point.getY(), mountainImage, mountainSize);
-
-            // Gezeichnete Position speichern
-            drawnAssets.add(point);
+              // Pixel ins GeneratedMapModel schreiben
+              generatedMapModel.addPixel(x, y, color);
+            }
           }
         }
+      } else {
+        System.err.println("Fehler bei der WFC-Generierung.");
       }
+
+    } catch (IOException e) {
+      System.err.println("Fehler beim Laden oder Speichern des Bildes: " + e.getMessage());
+    } catch (Exception e) {
+      System.err.println(e.getMessage());
     }
   }
+
 }
