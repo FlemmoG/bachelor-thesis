@@ -10,7 +10,7 @@ import org.locationtech.jts.geom.Coordinate;
 public class GeneratedMapModel {
   private final int width;
   private final int height;
-  private final WritableImage writableImage;
+  private WritableImage writableImage;
 
   public GeneratedMapModel(int width, int height) {
     this.width = width;
@@ -133,4 +133,7 @@ public class GeneratedMapModel {
   }
 
 
+  public void setWritableImage(WritableImage finalImage) {
+    this.writableImage = finalImage;
+  }
 }
