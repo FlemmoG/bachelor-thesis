@@ -13,11 +13,13 @@ import org.locationtech.jts.geom.Polygon;
 import java.util.Random;
 
 public class OceanMapCellGenerator implements MapCellGenerationStrategy{
+  private static final float NOISE_FREQUENCY = 0.004f;
   @Override
   public void generateMap(CellModel cellModel, GeneratedMapModel generatedMapModel) {
     FastNoiseLite noiseGenerator = new FastNoiseLite();
     noiseGenerator.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
     noiseGenerator.SetSeed(new Random().nextInt());
+    noiseGenerator.SetFrequency(NOISE_FREQUENCY);
 
     Polygon cellPolygon = cellModel.getPolygon();
     Envelope envelope = cellPolygon.getEnvelopeInternal();
@@ -75,14 +77,22 @@ public class OceanMapCellGenerator implements MapCellGenerationStrategy{
   }
 
   private Color getColorForHeight(double height) {
-    if (height == 0.0) {
-      return GlobalColors.WATER_SURFACE.interpolate(GlobalColors.TOTALLY_FLAT, 0.5);
-    } else if (height < 0.05) {
-      return GlobalColors.SHALLOW_WATER.interpolate(GlobalColors.WATER_SURFACE, height / 0.05);
-    } else if (height < 0.18) {
-      return GlobalColors.WATER_SURFACE.interpolate(GlobalColors.DEEP_WATER, (height - 0.05) / 0.05);
+    final double SHALLOW_MAX = 0.15;
+    final double SURFACE_MAX = 0.3;
+
+    if (height <= SHALLOW_MAX) {
+      return GlobalColors.SHALLOW_WATER.interpolate(
+              GlobalColors.WATER_SURFACE,
+              height / SHALLOW_MAX
+      );
+    } else if (height <= SURFACE_MAX) {
+      double blend = (height - SHALLOW_MAX) / (SURFACE_MAX - SHALLOW_MAX);
+      return GlobalColors.WATER_SURFACE.interpolate(
+              GlobalColors.DEEP_WATER,
+              blend
+      );
     } else {
-      return GlobalColors.DEEP_WATER.interpolate(Color.WHITE, (height - 0.1) / 0.9);
+      return GlobalColors.DEEP_WATER;
     }
   }
 }

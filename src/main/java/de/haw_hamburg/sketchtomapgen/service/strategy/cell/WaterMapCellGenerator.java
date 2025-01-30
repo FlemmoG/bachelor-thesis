@@ -83,11 +83,17 @@ public class WaterMapCellGenerator implements MapCellGenerationStrategy {
 
         if(boundary.contains(p)) {
           Color color = lake.contains(p)
-                  ? GlobalColors.WATER_SURFACE
+                  ? lakeColorForPosition(p, lake.getCentroid(), p.distance(lake.getBoundary()))
                   : GlobalColors.TOTALLY_FLAT;
           model.addPixel(x, y, color);
         }
       }
     }
   }
+
+  private Color lakeColorForPosition(Point position, Point center, double distanceToBoundary) {
+    double blend = Math.min(position.distance(center) / distanceToBoundary, 1.0) * 0.5;
+    return GlobalColors.DEEP_WATER.interpolate(GlobalColors.WATER_SURFACE, blend);
+  }
+
 }
