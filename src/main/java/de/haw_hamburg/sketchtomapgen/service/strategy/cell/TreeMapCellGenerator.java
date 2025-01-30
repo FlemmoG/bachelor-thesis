@@ -39,15 +39,34 @@ public class TreeMapCellGenerator implements MapCellGenerationStrategy {
       // Precompute polygon boundary for distance calculations
       Geometry cellBoundary = cellPolygon.getBoundary();
 
-      // WFC setup (unchanged)
       OverlappingModel model = new OverlappingModel(
-              inputImage, 3, WFC_GEN_SIZE, WFC_GEN_SIZE, true, false, 1, 102
+              inputImage,
+              3,
+              128,
+              128,
+              true,
+              false,
+              2,
+              -1
       );
 
       if (model.run(new Random().nextInt(), 0)) {
         BufferedImage outputImageOg = model.graphics();
         BufferedImage outputImage = new BufferedImage(outputWidth, outputHeight, outputImageOg.getType());
         Graphics2D g2d = outputImage.createGraphics();
+        g2d.setRenderingHint(
+                RenderingHints.KEY_INTERPOLATION,
+                RenderingHints.VALUE_INTERPOLATION_BICUBIC
+        );
+        g2d.setRenderingHint(
+                RenderingHints.KEY_RENDERING,
+                RenderingHints.VALUE_RENDER_QUALITY
+        );
+        g2d.setRenderingHint(
+                RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON
+        );
+
         int size = Math.max(outputWidth, outputHeight);
         g2d.drawImage(outputImageOg, 0, 0, size, size, null);
         g2d.dispose();

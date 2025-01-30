@@ -32,7 +32,10 @@ public class OceanMapCellGenerator implements MapCellGenerationStrategy{
         double normalizedY = (double) y / generatedMapModel.getHeight();
         Coordinate coordinate = new Coordinate(x, y);
 
-        if (cellPolygon.contains(new GeometryFactory().createPoint(coordinate))) {
+        if (cellPolygon.covers(new GeometryFactory().createPoint(coordinate))
+                && coordinate.x > 0 && coordinate.x < generatedMapModel.getWidth()
+                && coordinate.y > 0 && coordinate.y < generatedMapModel.getHeight()
+        ) {
 
           double distanceToEdge = calculateSmoothDistanceToEdge(coordinate, cellPolygon, width, height);
 

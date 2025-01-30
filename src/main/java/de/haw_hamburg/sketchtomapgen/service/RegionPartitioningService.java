@@ -90,8 +90,10 @@ public class RegionPartitioningService {
         }
       }
 
-      // Entferne den Bereich, der von der aktuellen Concave-Hülle abgedeckt wird
-      nonCoveredArea = nonCoveredArea.difference(concaveHull);
+      // Entferne den Bereich, der von den Polygonen abgedeckt wird
+      for (CellModel cellModel : voronoiCellModels) {
+        nonCoveredArea = nonCoveredArea.difference(cellModel.getPolygon());
+      }
     }
 
     // Nachdem alle Hüllen bearbeitet wurden, erstellen wir die "Wasser"-Zelle für den verbleibenden Bereich
