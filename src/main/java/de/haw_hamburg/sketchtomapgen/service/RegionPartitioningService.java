@@ -125,6 +125,7 @@ public class RegionPartitioningService {
   public WritableImage getImage() {
     WritableImage image = new WritableImage(width, height);
     PixelWriter pixelWriter = image.getPixelWriter();
+    GeometryFactory geometryFactory = new GeometryFactory();
 
     for (CellModel cellModel : voronoiCellModels) {
       Polygon polygon = cellModel.getPolygon();
@@ -134,14 +135,13 @@ public class RegionPartitioningService {
         for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y++) {
           if (x >= 0 && x < width && y >= 0 && y < height) {
             Coordinate point = new Coordinate(x, y);
-            if (polygon.contains(new GeometryFactory().createPoint(point))) {
+            if (polygon.contains(geometryFactory.createPoint(point))) {
               pixelWriter.setColor(x, y, cellModel.getColor());
             }
           }
         }
       }
     }
-
     return image;
   }
 

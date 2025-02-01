@@ -8,7 +8,7 @@ import org.locationtech.jts.geom.*;
 import org.locationtech.jts.operation.distance.DistanceOp;
 
 
-public class WaterMapCellGenerator implements MapCellGenerationStrategy {
+public class LakeMapCellGenerator implements MapCellGenerationStrategy {
   @Override
   public void generateMap(CellModel cellModel, GeneratedMapModel generatedMapModel) {
     Polygon voronoiPoly = cellModel.getPolygon();

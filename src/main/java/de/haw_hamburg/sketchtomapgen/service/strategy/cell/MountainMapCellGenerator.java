@@ -63,6 +63,14 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
       for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y += stepSize) {
         Coordinate point = new Coordinate(x, y);
 
+        // Prüfen, ob der Punkt zu nahe an einem anderen Asset liegt
+        boolean isTooClose = drawnAssets.stream()
+                .anyMatch(existing -> point.distance(existing) < minDistanceBetweenAssets);
+
+        if (isTooClose){
+          continue;
+        }
+
         // Noise-Wert für die aktuelle Position berechnen
         float noiseValue = fastNoiseLite.GetNoise(x, y);
 
@@ -71,11 +79,8 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
 
         // Nur zeichnen, wenn der Noise-Wert hoch genug ist
         if (normalizedValue > noiseThreshold) {
-          // Prüfen, ob der Punkt zu nahe an einem anderen Asset liegt
-          boolean isTooClose = drawnAssets.stream()
-                  .anyMatch(existing -> point.distance(existing) < minDistanceBetweenAssets);
 
-          if (!isTooClose && polygon.contains(new GeometryFactory().createPoint(point))) {
+          if (polygon.contains(new GeometryFactory().createPoint(point))) {
             int mountainSize = (int) (5 + Math.pow(normalizedValue, 3) * 100 * mountainSizeFactor);
 
             // Randomly flip the image

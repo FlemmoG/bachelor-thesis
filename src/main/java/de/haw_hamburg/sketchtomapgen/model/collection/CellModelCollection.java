@@ -1,6 +1,7 @@
 package de.haw_hamburg.sketchtomapgen.model.collection;
 
 import de.haw_hamburg.sketchtomapgen.model.CellModel;
+import de.haw_hamburg.sketchtomapgen.util.Icon;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
@@ -35,6 +36,14 @@ public class CellModelCollection implements Iterable<CellModel> {
             .map(CellModel::getPolygon)
             .toList();
   }
+
+  public List<Polygon> getPolygonsExcludingOcean() {
+    return cellModels.stream()
+            .filter(cellModel -> !cellModel.getIcon().equals(Icon.OCEAN))
+            .map(CellModel::getPolygon)
+            .toList();
+  }
+
 
   public GeometryCollection toGeometryCollection() {
     GeometryFactory geometryFactory = new GeometryFactory();

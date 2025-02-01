@@ -6,12 +6,11 @@ import de.haw_hamburg.sketchtomapgen.model.collection.CellModelCollection;
 import de.haw_hamburg.sketchtomapgen.service.strategy.cell.*;
 import de.haw_hamburg.sketchtomapgen.util.*;
 import de.haw_hamburg.sketchtomapgen.util.l_system.StochasticLSystemGenerator;
-import de.haw_hamburg.sketchtomapgen.util.l_system.TurtleRenderer;
+import de.haw_hamburg.sketchtomapgen.util.l_system.RiverTurtleRenderer;
 import de.haw_hamburg.sketchtomapgen.util.l_system.WeightedRule;
 import javafx.scene.Group;
 import javafx.scene.effect.BlendMode;
 import javafx.scene.effect.ColorAdjust;
-import javafx.scene.effect.GaussianBlur;
 import javafx.scene.image.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
@@ -20,6 +19,7 @@ import javafx.scene.paint.Stop;
 import javafx.scene.shape.Rectangle;
 import org.apfloat.internal.ImplementationMismatchException;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.linearref.LengthIndexedLine;
 
 import java.net.URL;
 import java.util.*;
@@ -38,7 +38,7 @@ public class MapGenerationService {
     strategyMap = new HashMap<>();
     strategyMap.put(Icon.MOUNTAIN, new MountainMapCellGenerator());
     strategyMap.put(Icon.TREE, new TreeMapCellGenerator());
-    strategyMap.put(Icon.WATER, new WaterMapCellGenerator());
+    strategyMap.put(Icon.WATER, new LakeMapCellGenerator());
     strategyMap.put(Icon.VILLAGE, new VillageMapCellGenerator());
     strategyMap.put(Icon.OCEAN, new OceanMapCellGenerator());
   }
@@ -52,7 +52,6 @@ public class MapGenerationService {
       throw new IllegalStateException("Service not initialized");
     }
     generatedMapModel = new GeneratedMapModel(width, height);
-    //addRiversToMap();
     for (CellModel cell : voronoiCellModels) {
       MapCellGenerationStrategy strategy = strategyMap.get(cell.getIcon());
       if (strategy != null) {
@@ -61,6 +60,7 @@ public class MapGenerationService {
         throw new ImplementationMismatchException("No strategy implementation found for icon type: " + cell.getIcon());
       }
     }
+    addRiversToMap();
 
     addFiltersToImage(generatedMapModel);
   }
@@ -69,9 +69,9 @@ public class MapGenerationService {
     WritableImage noisyImage = addNoise(generatedMapModel.getWritableImage(), 0.1);
 
     ColorAdjust colorAdjust = new ColorAdjust();
-    colorAdjust.setHue(-0.05);  // Leichter Gelbstich
-    colorAdjust.setSaturation(-0.7); // Entsättigung
-    colorAdjust.setBrightness(0.15); // Aufhellung
+    colorAdjust.setHue(-0.025);  // Leichter Gelbstich
+    colorAdjust.setSaturation(-0.6); // Entsättigung
+    colorAdjust.setBrightness(0.075); // Aufhellung
     ImageView imageView = new ImageView(noisyImage);
     imageView.setEffect(colorAdjust);
 
@@ -108,7 +108,7 @@ public class MapGenerationService {
   }
 
   private void addRiversToMap() {
-    List<Polygon> polygons = voronoiCellModels.getPolygons();
+    List<Polygon> polygons = voronoiCellModels.getPolygonsExcludingOcean();
     if (polygons.isEmpty()) return;
 
     GeometryFactory factory = new GeometryFactory();
@@ -117,51 +117,68 @@ public class MapGenerationService {
             .union();
 
     Random random = new Random();
-    Point center = combinedGeometry.getCentroid();
 
     Map<Character, List<WeightedRule>> stochasticRules = new HashMap<>();
     stochasticRules.put('I', Arrays.asList(
             new WeightedRule("+FF-FF-RX", 1),
             new WeightedRule("-FF+FF-RX", 1),
-            new WeightedRule("-FF-FF+RX", 1)
+            new WeightedRule("+FF[-F]F-RX", 1),
+            new WeightedRule("-FF[+F]F-RX", 1)
     ));
     stochasticRules.put('X', Arrays.asList(
             new WeightedRule("+FF-FF+RI", 1),
-            new WeightedRule("-FF+FF+RI", 1)
+            new WeightedRule("-FF+FF+RI", 1),
+            new WeightedRule("+FF[-F]F+RI", 1),
+            new WeightedRule("-FF[+F]F+RI", 1)
     ));
     stochasticRules.put('R', Arrays.asList(
-            new WeightedRule("F", 3),        // Favor straight growth
-            new WeightedRule("FF[SL]FF", 1),  // Reduce branching
-            new WeightedRule("FF[LS]FF", 1)
-    ));
-    stochasticRules.put('S', Arrays.asList(
-            new WeightedRule("FF-I+", 2),
-            new WeightedRule("F", 1)        // Add direct, non-branching rules
-    ));
-    stochasticRules.put('L', Arrays.asList(
-            new WeightedRule("FF+I-", 1),
-            new WeightedRule("FF-I+", 1)
+            new WeightedRule("F[+F]F[-F]F", 3), // Mehr Verzweigungen
+            new WeightedRule("FF", 1)
     ));
 
-    int iterations = 15;
-    double stepSize = combinedGeometry.getEnvelopeInternal().getWidth() * 0.01;
-    double beta = 15;
+    int iterations = 10;
+    double baseStepSize = combinedGeometry.getEnvelopeInternal().getWidth() * 0.008;
+    double beta = 35; // Winkeländerung
 
-    String riverPattern = new StochasticLSystemGenerator("I", stochasticRules, iterations).generate();
+    // Flussparameter
+    int numberOfRivers = 5;
+    for (int t = 0; t < numberOfRivers; t++) {
+      // Zufälligen Startpunkt am Rand wählen
+      Coordinate startCoord = getRandomEdgePoint(combinedGeometry, random);
+      Point center = combinedGeometry.getCentroid();
 
-    for (int t = 0; t < 3; t++) {
-      TurtleRenderer renderer = new TurtleRenderer(
+      // Initiale Richtung zum Zentrum
+      double dx = center.getX() - startCoord.x;
+      double dy = center.getY() - startCoord.y;
+      double initialAngle = Math.toDegrees(Math.atan2(dy, dx));
+
+      // Schrittgröße mit zufälliger Variation
+      double stepSize = baseStepSize * (0.8 + random.nextDouble() * 0.4);
+
+      RiverTurtleRenderer renderer = new RiverTurtleRenderer(
               generatedMapModel,
-              center.getX(),
-              center.getY(),
-              random.nextDouble() * 360,
-              stepSize * (1 - t * 0.15),
+              startCoord.x,
+              startCoord.y,
+              initialAngle,
+              stepSize,
               beta,
-              combinedGeometry
+              combinedGeometry,
+              voronoiCellModels
       );
 
+      String riverPattern = new StochasticLSystemGenerator("I", stochasticRules, iterations).generate();
       renderer.render(riverPattern);
     }
+  }
+
+  private Coordinate getRandomEdgePoint(Geometry geometry, Random random) {
+    Geometry boundary = geometry.getBoundary();
+    if (boundary instanceof LineString) {
+      LengthIndexedLine lil = new LengthIndexedLine(boundary);
+      double length = lil.getEndIndex();
+      return lil.extractPoint(random.nextDouble() * length);
+    }
+    return geometry.getCentroid().getCoordinate();
   }
 
   private WritableImage addNoise(WritableImage image, double intensity) {

@@ -5,7 +5,6 @@ import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
-import org.locationtech.jts.geom.Coordinate;
 
 public class GeneratedMapModel {
   private final int width;
@@ -96,42 +95,6 @@ public class GeneratedMapModel {
       }
     }
   }
-
-  public void drawLine(Coordinate start, Coordinate end, Color color) {
-    PixelWriter pixelWriter = writableImage.getPixelWriter();
-
-    // Bresenham-Algorithmus oder einfache Line-Interpolation
-    int x0 = (int) start.x;
-    int y0 = (int) start.y;
-    int x1 = (int) end.x;
-    int y1 = (int) end.y;
-
-    int dx = Math.abs(x1 - x0);
-    int dy = Math.abs(y1 - y0);
-
-    int sx = x0 < x1 ? 1 : -1;
-    int sy = y0 < y1 ? 1 : -1;
-
-    int err = dx - dy;
-
-    while (true) {
-      pixelWriter.setColor(x0, y0, color); // Zeichne Pixel
-
-      if (x0 == x1 && y0 == y1) break;
-
-      int e2 = 2 * err;
-
-      if (e2 > -dy) {
-        err -= dy;
-        x0 += sx;
-      }
-      if (e2 < dx) {
-        err += dx;
-        y0 += sy;
-      }
-    }
-  }
-
 
   public void setWritableImage(WritableImage finalImage) {
     this.writableImage = finalImage;
