@@ -92,7 +92,7 @@ public class LakeMapCellGenerator implements MapCellGenerationStrategy {
   }
 
   private Color lakeColorForPosition(Point position, Point center, double distanceToBoundary) {
-    double blend = Math.min(position.distance(center) / distanceToBoundary, 1.0) * 0.5;
+    double blend = Math.min(position.distance(center) / distanceToBoundary, 1.0);
     return GlobalColors.DEEP_WATER.interpolate(GlobalColors.WATER_SURFACE, blend);
   }
 

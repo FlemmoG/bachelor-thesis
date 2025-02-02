@@ -115,7 +115,7 @@ public class RiverTurtleRenderer {
 
     // Interpolationsbereich.
     Color lowerBound = GlobalColors.DEEP_WATER;
-    Color upperBound = GlobalColors.DEEP_WATER.interpolate(GlobalColors.WATER_SURFACE, 0.5);
+    Color upperBound = GlobalColors.WATER_SURFACE;
 
     double tolerance = 0.01;
 
@@ -133,7 +133,7 @@ public class RiverTurtleRenderer {
 
 
 
-  protected void drawLine(int startX, int startY, int endX, int endY) {
+  private void drawLine(int startX, int startY, int endX, int endY) {
     // Bresenham mit Breite und Kollisionsprüfung
     int dx = Math.abs(endX - startX);
     int dy = Math.abs(endY - startY);
@@ -141,44 +141,39 @@ public class RiverTurtleRenderer {
     int sy = startY < endY ? 1 : -1;
     int err = dx - dy;
 
+    // Küstenübergang
+    double smallDistance = 20.0;
+
     while (true) {
       // Für jeden Pixel in der aktuellen Breite
       for (int w = -currentWidth; w <= currentWidth; w++) {
         for (int h = -currentWidth; h <= currentWidth; h++) {
           int px = startX + w;
           int py = startY + h;
-          if (isValidPosition(px, py)) {
-            // Erzeuge Koordinate des Pixels
-            Coordinate pixelCoord = new Coordinate(px, py);
-
-            // Berechne die Distanz vom Pixel zur Quelle
+          Coordinate pixelCoord = new Coordinate(px, py);
+          if (isValidPosition(px, py) && !isLake(pixelCoord)) {
+            // Berechne die Distanz von diesem Pixel zur Begrenzung
             double distFromBoundary = distanceToBoundary(pixelCoord);
 
-            // Hole den nächstgelegenen See (als Koordinate)
-            Coordinate lakeCoord = getClosestLake(pixelCoord);
-            // Falls kein See gefunden wird, verwende einen großen Wert, sodass die Interpolation
-            // dann in Richtung SHALLOW_WATER tendiert
-            double distToLake = (lakeCoord == null) ? 1e9 : pixelCoord.distance(lakeCoord);
-
-
-            double t = distFromBoundary / (distFromBoundary + distToLake);
+            // Berechne den Interpolationswert t anhand der kleinen Referenzdistanz.
+            // t = 0 (auf der Grenze) -> SHALLOW_WATER,
+            // t = 1 (bei smallDistance oder mehr) -> DEEP_WATER.
+            double t = Math.min(distFromBoundary / smallDistance, 1.0);
 
             // Interpolieren zwischen den Farben
-            Color color = GlobalColors.SHALLOW_WATER.interpolate(GlobalColors.DEEP_WATER, t);
+            Color color = GlobalColors.SHALLOW_WATER.interpolate(GlobalColors.WATER_SURFACE, t);
 
-            // Füge den Pixel mit der berechneten Farbe hinzu, wenn nicht innerhalb eines Sees
-            if (!isLake(pixelCoord)) {
-              mapModel.addPixel(px, py, color);
-            }
+            mapModel.addPixel(px, py, color);
+
           }
         }
       }
 
       if (startX == endX && startY == endY) break;
 
-      // Kollisionsprüfung für nächsten Schritt
+      // Kollisionsprüfung für den nächsten Schritt
       if (!isValidPosition(startX + sx, startY) && !isValidPosition(startX, startY + sy)) {
-        break; // Blockiert, Abbruch
+        break;
       }
 
       int e2 = 2 * err;
@@ -194,14 +189,13 @@ public class RiverTurtleRenderer {
   }
 
 
+
   private boolean isValidPosition(int x, int y) {
-    // Prüfe auf Kartenbegrenzung und Geländetyp
     Point p = geometryFactory.createPoint(new Coordinate(x, y));
     return boundaryPolygon.contains(p) && !isMountain(x, y);
   }
 
   private boolean isMountain(int x, int y) {
-    // Finde die Zelle, die diese Position enthält
     for (CellModel cell : cellModels) {
       if (cell.getPolygon().contains(geometryFactory.createPoint(new Coordinate(x, y)))) {
         return cell.getIcon() == Icon.MOUNTAIN;

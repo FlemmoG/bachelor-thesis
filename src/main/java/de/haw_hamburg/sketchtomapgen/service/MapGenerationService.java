@@ -70,7 +70,7 @@ public class MapGenerationService {
 
     ColorAdjust colorAdjust = new ColorAdjust();
     colorAdjust.setHue(-0.025);  // Leichter Gelbstich
-    colorAdjust.setSaturation(-0.6); // Entsättigung
+    colorAdjust.setSaturation(-0.65); // Entsättigung
     colorAdjust.setBrightness(0.075); // Aufhellung
     ImageView imageView = new ImageView(noisyImage);
     imageView.setEffect(colorAdjust);
@@ -136,12 +136,13 @@ public class MapGenerationService {
             new WeightedRule("FF", 1)
     ));
 
-    int iterations = 10;
+    int iterations = 12;
     double baseStepSize = combinedGeometry.getEnvelopeInternal().getWidth() * 0.008;
     double beta = 35; // Winkeländerung
 
     // Flussparameter
-    int numberOfRivers = 5;
+    int numberOfRivers = (int) combinedGeometry.getArea() / 10000;
+    System.out.println(numberOfRivers);
     for (int t = 0; t < numberOfRivers; t++) {
       // Zufälligen Startpunkt am Rand wählen
       Coordinate startCoord = getRandomEdgePoint(combinedGeometry, random);
