@@ -15,3 +15,5 @@ Sketch -> Icon Placement ->
 Voronoi-Diagramm -> Prozedural generierte Karte: 
 
 ![Stadtteile Hamburg](src/main/resources/de/haw_hamburg/sketchtomapgen/rendered/PROCESS.jpg)
+
+Die Gebirgszellen wurden mit Perlin-Noise generiert, die Seeregion durch zufällige Variationen, das Waldgebiet mithilfe des WFC-Algorithmus und die Flussstrukturen durch L-Systeme.
