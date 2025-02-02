@@ -10,3 +10,8 @@ Das folgende Beispiel zeigt einen WIP-Umriss von **Hamburg und seinen Bezirken**
 Das nächste Beispiel zeigt einen WIP-Umriss von **Hamburg und seinen Stadtteilen**, ebenfalls generiert durch Voronoi-Diagramme:
 
 ![Stadtteile Hamburg](src/main/resources/de/haw_hamburg/sketchtomapgen/rendered/HAM_MAP_2.png)
+
+Sketch -> Icon Placement -> 
+Voronoi-Diagramm -> Prozedural generierte Karte: 
+
+![Stadtteile Hamburg](src/main/resources/de/haw_hamburg/sketchtomapgen/rendered/PROCESS.jpg)
