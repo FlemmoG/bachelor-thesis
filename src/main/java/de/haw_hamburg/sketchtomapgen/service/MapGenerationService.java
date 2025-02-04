@@ -61,7 +61,7 @@ public class MapGenerationService {
       }
     }
     addRiversToMap();
-
+    addLabelsToMap();
     addFiltersToImage(generatedMapModel);
   }
 
@@ -105,6 +105,13 @@ public class MapGenerationService {
 
     WritableImage finalImage = processingGroup.snapshot(null, null);
     generatedMapModel.setWritableImage(finalImage);
+  }
+
+  private void addLabelsToMap() {
+    MapCellGenerationStrategy villageStrategy = strategyMap.get(Icon.VILLAGE);
+    if (villageStrategy instanceof VillageMapCellGenerator villageGenerator) {
+      villageGenerator.drawMarkers(generatedMapModel);
+    }
   }
 
   private void addRiversToMap() {

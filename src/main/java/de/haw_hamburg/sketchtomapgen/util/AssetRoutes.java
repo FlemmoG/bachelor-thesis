@@ -9,6 +9,8 @@ public class AssetRoutes {
   public static final String PIXE_TREE_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/rastered.png";
   public static final String VILLAGE_TILE_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/villagetile.png";
   public static final String PARCHMENT_TEXTURE = "/de/haw_hamburg/sketchtomapgen/assets/parchment2.png";
+  public static final String FANTASY_FONT = "/de/haw_hamburg/sketchtomapgen/fonts/UncialAntiqua-Regular.ttf";
+
 
 
   private AssetRoutes() {

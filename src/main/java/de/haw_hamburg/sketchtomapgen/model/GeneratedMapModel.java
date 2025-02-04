@@ -1,29 +1,38 @@
 package de.haw_hamburg.sketchtomapgen.model;
 
+import de.haw_hamburg.sketchtomapgen.util.AssetRoutes;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+
 public class GeneratedMapModel {
   private final int width;
   private final int height;
   private WritableImage writableImage;
+  private Font font;
 
   public GeneratedMapModel(int width, int height) {
     this.width = width;
     this.height = height;
     this.writableImage = new WritableImage(width, height);
+    this.font = loadFantasyFont(15);
   }
 
   public void addPixel(int x, int y, Color color) {
     if (x >= 0 && x < width && y >= 0 && y < height) {
       PixelWriter pixelWriter = writableImage.getPixelWriter();
       pixelWriter.setColor(x, y, color);
-    } else {
-      System.err.println("Tried to draw pixel out of bounds: (" + x + ", " + y + ")");
-    }
+    } //else -> ignore
   }
 
   public Color getColorAt(int x, int y) {
@@ -96,7 +105,42 @@ public class GeneratedMapModel {
     }
   }
 
+  public void addLabel(int x, int y, String text, Color fxColor, int fontSize) {
+    BufferedImage bufferedImage = SwingFXUtils.fromFXImage(this.writableImage, null);
+
+    Graphics2D g2d = bufferedImage.createGraphics();
+
+    g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+    g2d.setFont(font);
+
+    java.awt.Color awtColor = new java.awt.Color(
+            (float) fxColor.getRed(),
+            (float) fxColor.getGreen(),
+            (float) fxColor.getBlue(),
+            (float) fxColor.getOpacity()
+    );
+    g2d.setColor(awtColor);
+    g2d.drawString(text, x, y);
+
+    g2d.dispose();
+
+    this.writableImage = SwingFXUtils.toFXImage(bufferedImage, this.writableImage);
+  }
+
   public void setWritableImage(WritableImage finalImage) {
     this.writableImage = finalImage;
+  }
+
+  private Font loadFantasyFont(int fontSize) {
+    try {
+      URL fontUrl = getClass().getResource(AssetRoutes.FANTASY_FONT);
+      File file = new File(fontUrl.toURI());
+      return Font.createFont(Font.TRUETYPE_FONT, file).deriveFont(Font.PLAIN, fontSize);
+    } catch (FontFormatException | IOException | URISyntaxException e ) {
+      e.printStackTrace();
+      return new Font("Serif", Font.PLAIN, fontSize);
+    }
   }
 }
