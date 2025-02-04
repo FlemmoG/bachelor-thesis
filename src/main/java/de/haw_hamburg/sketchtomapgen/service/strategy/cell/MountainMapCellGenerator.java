@@ -24,7 +24,7 @@ import java.util.Random;
 public class MountainMapCellGenerator implements MapCellGenerationStrategy {
 
   @Override
-  public void generateMap(CellModel voronoiCellModel, GeneratedMapModel generatedMapModel) {
+  public void generateMap(CellModel cellModel, GeneratedMapModel generatedMapModel) {
     // Skalierungsvariablen
     final double mountainSizeFactor = 2;   // Multipliziert die Größe der Berge
     final double noiseThreshold = 0.55;      // Ab diesem Noise-Wert werden Berge gezeichnet
@@ -37,8 +37,18 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
     fastNoiseLite.SetFrequency(0.01f);
 
     // Voronoi-Polygon und dessen Envelope holen
-    Polygon polygon = voronoiCellModel.getPolygon();
+    Polygon polygon = cellModel.getPolygon();
     Envelope envelope = polygon.getEnvelopeInternal();
+
+    // Grundfläche
+    for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x++) {
+      for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y++) {
+        Coordinate point = new Coordinate(x, y);
+        if (polygon.contains(new GeometryFactory().createPoint(point))) {
+          generatedMapModel.addPixel(x,y, GlobalColors.TOTALLY_FLAT);
+        }
+      }
+    }
 
     // Mountain-Asset laden
     URL mountainImageUrl = getClass().getResource(AssetRoutes.MOUNTAINS_ASSET);
@@ -48,15 +58,6 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
 
     // Liste zur Nachverfolgung der gezeichneten Asset-Positionen
     List<Coordinate> drawnAssets = new ArrayList<>();
-
-    for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x++) {
-      for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y++) {
-        Coordinate point = new Coordinate(x, y);
-        if (polygon.contains(new GeometryFactory().createPoint(point))) {
-          generatedMapModel.addPixel(x,y, GlobalColors.TOTALLY_FLAT);
-        }
-      }
-    }
 
     // Schleife über alle Punkte im Envelope mit festem Schritt (stepSize)
     for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x += stepSize) {
