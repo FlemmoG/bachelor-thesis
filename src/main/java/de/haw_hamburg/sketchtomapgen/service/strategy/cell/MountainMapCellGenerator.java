@@ -27,7 +27,7 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
   public void generateMap(CellModel cellModel, GeneratedMapModel generatedMapModel) {
     // Skalierungsvariablen
     final double mountainSizeFactor = 2;   // Multipliziert die Größe der Berge
-    final double noiseThreshold = 0.55;      // Ab diesem Noise-Wert werden Berge gezeichnet
+    final double noiseThreshold = 0.3;      // Ab diesem Noise-Wert werden Berge gezeichnet
     final int stepSize = 30;                // Schrittweite für die Iteration (größere Werte = weniger Berge)
     final int minDistanceBetweenAssets = 40; // Minimaler Abstand zwischen zwei Bergen
 

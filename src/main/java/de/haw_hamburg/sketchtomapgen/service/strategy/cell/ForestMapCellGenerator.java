@@ -18,11 +18,11 @@ import java.util.Random;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.operation.distance.DistanceOp;
 
-public class TreeMapCellGenerator implements MapCellGenerationStrategy {
+public class ForestMapCellGenerator implements MapCellGenerationStrategy {
   private static final double MAX_BLEND_DISTANCE = 30.0;
   private static final double NOISE_STRENGTH = 0.3;
   private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
-  private static final int WFC_GEN_SIZE = 256;
+  private static final int WFC_TILE_SIZE = 128;
 
   @Override
   public void generateMap(CellModel cellModel, GeneratedMapModel generatedMapModel) {
@@ -33,17 +33,21 @@ public class TreeMapCellGenerator implements MapCellGenerationStrategy {
       Polygon cellPolygon = cellModel.getPolygon();
       Envelope envelope = cellPolygon.getEnvelopeInternal();
 
-      int outputWidth = (int) Math.ceil(envelope.getMaxX() - envelope.getMinX());
-      int outputHeight = (int) Math.ceil(envelope.getMaxY() - envelope.getMinY());
+      int minX = (int) Math.floor(envelope.getMinX());
+      int maxX = (int) Math.floor(envelope.getMaxX());
+      int minY = (int) Math.floor(envelope.getMinY());
+      int maxY = (int) Math.floor(envelope.getMaxY());
 
-      // Precompute polygon boundary for distance calculations
+      int outputWidth = maxX - minX + 1;
+      int outputHeight = maxY - minY + 1;
+
       Geometry cellBoundary = cellPolygon.getBoundary();
 
       OverlappingModel model = new OverlappingModel(
               inputImage,
               3,
-              128,
-              128,
+              WFC_TILE_SIZE,
+              WFC_TILE_SIZE,
               true,
               false,
               2,
@@ -51,76 +55,63 @@ public class TreeMapCellGenerator implements MapCellGenerationStrategy {
       );
 
       if (model.run(new Random().nextInt(), 0)) {
-        BufferedImage outputImageOg = model.graphics();
-        BufferedImage outputImage = new BufferedImage(outputWidth, outputHeight, outputImageOg.getType());
-        Graphics2D g2d = outputImage.createGraphics();
-        g2d.setRenderingHint(
-                RenderingHints.KEY_INTERPOLATION,
-                RenderingHints.VALUE_INTERPOLATION_BICUBIC
-        );
-        g2d.setRenderingHint(
-                RenderingHints.KEY_RENDERING,
-                RenderingHints.VALUE_RENDER_QUALITY
-        );
-        g2d.setRenderingHint(
-                RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_ON
-        );
+        BufferedImage wfcTile = model.graphics();
+        BufferedImage outputImage = new BufferedImage(outputWidth, outputHeight, BufferedImage.TYPE_INT_RGB);
 
-        int size = Math.max(outputWidth, outputHeight);
-        g2d.drawImage(outputImageOg, 0, 0, size, size, null);
+        Graphics2D g2d = outputImage.createGraphics();
+        TexturePaint texture = new TexturePaint(wfcTile, new Rectangle(0, 0, WFC_TILE_SIZE, WFC_TILE_SIZE));
+        g2d.setPaint(texture);
+        g2d.fillRect(0, 0, outputWidth, outputHeight);
         g2d.dispose();
 
-        int minX = (int) envelope.getMinX();
-        int minY = (int) envelope.getMinY();
-
-        for (int x = minX; x <= envelope.getMaxX(); x++) {
-          for (int y = minY; y <= envelope.getMaxY(); y++) {
+        for (int x = minX; x <= maxX; x++) {
+          for (int y = minY; y <= maxY; y++) {
             Coordinate coord = new Coordinate(x, y);
             if (cellPolygon.contains(GEOMETRY_FACTORY.createPoint(coord))) {
               int imgX = x - minX;
               int imgY = y - minY;
 
-              if (imgX < 0 || imgX >= outputWidth || imgY < 0 || imgY >= outputHeight) continue;
-
-              // Calculate distance to nearest cell edge
               double distance = DistanceOp.distance(
                       GEOMETRY_FACTORY.createPoint(coord),
                       cellBoundary
               );
 
               int rgb = outputImage.getRGB(imgX, imgY);
-              Color color = Color.rgb(
-                      (rgb >> 16) & 0xFF,
-                      (rgb >> 8) & 0xFF,
-                      rgb & 0xFF
+              Color color = applyEdgeEffects(
+                      Color.rgb(
+                              (rgb >> 16) & 0xFF,
+                              (rgb >> 8) & 0xFF,
+                              rgb & 0xFF
+                      ),
+                      distance
               );
-
-              // Apply blending near edges
-              if (distance < MAX_BLEND_DISTANCE) {
-                double blendFactor = distance / MAX_BLEND_DISTANCE;
-                color = blendColors(color, blendFactor);
-              }
 
               generatedMapModel.addPixel(x, y, color);
             }
           }
         }
       } else {
-        System.out.println("Fehler");
+        System.out.println("WFC-Generierung fehlgeschlagen");
       }
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
 
+  private Color applyEdgeEffects(Color baseColor, double distance) {
+    if (distance < MAX_BLEND_DISTANCE) {
+      double blendFactor = distance / MAX_BLEND_DISTANCE;
+      return blendColors(baseColor, blendFactor);
+    }
+    return baseColor;
+  }
+
   private Color blendColors(Color source, double blendFactor) {
-    double easedFactor = blendFactor * blendFactor;
+    double easedFactor = Math.pow(blendFactor, 2);
     Random random = new Random((long) (blendFactor * 1000));
     double noise = random.nextDouble() * NOISE_STRENGTH;
-    double finalFactor = Math.min(1, Math.max(0, easedFactor + noise - NOISE_STRENGTH/2));
+    double finalFactor = Math.min(1, Math.max(0, easedFactor + noise - NOISE_STRENGTH / 2));
 
     return source.interpolate(GlobalColors.TOTALLY_FLAT, 1 - finalFactor);
   }
 }
-

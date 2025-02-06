@@ -37,7 +37,7 @@ public class MapGenerationService {
 
     strategyMap = new HashMap<>();
     strategyMap.put(Icon.MOUNTAIN, new MountainMapCellGenerator());
-    strategyMap.put(Icon.TREE, new TreeMapCellGenerator());
+    strategyMap.put(Icon.TREE, new ForestMapCellGenerator());
     strategyMap.put(Icon.WATER, new LakeMapCellGenerator());
     strategyMap.put(Icon.VILLAGE, new VillageMapCellGenerator());
     strategyMap.put(Icon.OCEAN, new OceanMapCellGenerator());
@@ -62,10 +62,10 @@ public class MapGenerationService {
     }
     addRiversToMap();
     addLabelsToMap();
-    addFiltersToImage(generatedMapModel);
+    addFiltersToImage();
   }
 
-  private void addFiltersToImage(GeneratedMapModel generatedMapModel) {
+  private void addFiltersToImage() {
     WritableImage noisyImage = addNoise(generatedMapModel.getWritableImage(), 0.1);
 
     ColorAdjust colorAdjust = new ColorAdjust();

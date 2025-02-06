@@ -15,7 +15,7 @@ public class VillageMapCellGenerator implements MapCellGenerationStrategy {
   };
 
   private static final String[] ROOTS = {
-          "hain", "tal", "furt", "burg", "heim", "winkel", "feld", "dorf", "grund", "stedt"
+          "hain", "tal", "furt", "burg", "heim", "winkel", "feld", "dorf", "grund", "stedt", "lord"
   };
 
   private static final String[] SUFFIXES = {
