@@ -6,6 +6,7 @@ import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 import org.locationtech.jts.algorithm.hull.ConcaveHull;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.precision.GeometryPrecisionReducer;
 
 import java.util.*;
 
@@ -48,26 +49,27 @@ public class SketchModel {
 
   }
 
-  public Geometry getConcaveHull(){
+/*  public Geometry getConcaveHull(){
     MultiPoint multiPoint = geometryFactory.createMultiPointFromCoords(points.toArray(new Coordinate[0]));
     double maxLength = calculateMaxDistanceBetweenPoints();
 
     System.out.println(maxLength);
 
     return ConcaveHull.concaveHullByLength(multiPoint,maxLength,false);
-  }
+  }*/
 
   public GeometryCollection getConcaveHullsForClusters() {
-    double eps = 5.0; // Radius for neighbors
-    int minPoints = 3; // minimal points for cluster
+    double eps = 5.0; // Radius für Nachbarn
+    int minPoints = 3; // Minimale Anzahl an Punkten pro Cluster
 
     DBSCANClusterer<ClusterableCoordinate> clusterer = new DBSCANClusterer<>(eps, minPoints);
-
-    // Cluster berechnen
     List<Cluster<ClusterableCoordinate>> clusters = clusterer.cluster(points);
 
-    // Concave Hulls für alle Cluster erstellen
     List<Geometry> hulls = new ArrayList<>();
+
+    // Erstelle einen Reducer mit maximaler Präzision (DOUBLE)
+    GeometryPrecisionReducer precisionReducer = new GeometryPrecisionReducer(new PrecisionModel(PrecisionModel.FLOATING));
+
     for (Cluster<ClusterableCoordinate> cluster : clusters) {
       List<Coordinate> clusterCoords = new ArrayList<>();
       for (ClusterableCoordinate point : cluster.getPoints()) {
@@ -75,38 +77,42 @@ public class SketchModel {
       }
 
       if (!clusterCoords.isEmpty()) {
+        // Berechne maxLength spezifisch für das aktuelle Cluster
+        double maxLength = calculateMaxDistanceBetweenPoints(clusterCoords);
+
+        // Erstelle aus den Cluster-Koordinaten einen MultiPoint
         MultiPoint multiPoint = geometryFactory.createMultiPointFromCoords(clusterCoords.toArray(new Coordinate[0]));
-        double maxLength = calculateMaxDistanceBetweenPoints();
+
+        // Erzeuge den Concave-Hull für diesen Cluster
         Geometry concaveHull = ConcaveHull.concaveHullByLength(multiPoint, maxLength, false);
+
+        // Reduziere die Geometrie auf maximale Präzision
+        concaveHull = precisionReducer.reduce(concaveHull);
+
         hulls.add(concaveHull);
       }
     }
 
-    // Alle Hulls in eine GeometryCollection zusammenführen
     return geometryFactory.createGeometryCollection(hulls.toArray(new Geometry[0]));
   }
 
-  private double calculateMaxDistanceBetweenPoints() {
+
+  private double calculateMaxDistanceBetweenPoints(List<Coordinate> coordinates) {
+    if (coordinates.size() < 2) {
+      return 0.0;
+    }
+
     double totalDistance = 0.0;
     int count = 0;
 
-    Iterator<ClusterableCoordinate> iterator = points.iterator();
-    Coordinate prev = iterator.next();
-
-    while (iterator.hasNext()) {
-      Coordinate curr = iterator.next();
-
-      // Distance between two points
-      double distance = prev.distance(curr);
-      totalDistance += distance;
+    // Sortierung ist hier optional – je nachdem, in welcher Reihenfolge die Punkte vorliegen.
+    // Es wird einfach der Abstand der Punkte in der Liste verwendet.
+    for (int i = 1; i < coordinates.size(); i++) {
+      totalDistance += coordinates.get(i - 1).distance(coordinates.get(i));
       count++;
-
-      prev = curr;
     }
 
-    // Avg distance (scaled)
     double averageDistance = totalDistance / count;
-
     return averageDistance * 0.2;
   }
 
