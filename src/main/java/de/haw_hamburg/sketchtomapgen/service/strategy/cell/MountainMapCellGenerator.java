@@ -26,10 +26,11 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
   @Override
   public void generateMap(CellModel cellModel, GeneratedMapModel generatedMapModel) {
     // Skalierungsvariablen
-    final double mountainSizeFactor = 2;   // Multipliziert die Größe der Berge
+    final double mountainSizeFactor = 2.5;   // Multipliziert die Größe der Berge
     final double noiseThreshold = 0.3;      // Ab diesem Noise-Wert werden Berge gezeichnet
-    final int stepSize = 30;                // Schrittweite für die Iteration (größere Werte = weniger Berge)
+    final int stepSize = 20;                // Schrittweite für die Iteration (größere Werte = weniger Berge)
     final int minDistanceBetweenAssets = 40; // Minimaler Abstand zwischen zwei Bergen
+    final int minMountainSize = 30; // Minimale Größe der Berge (verhindert zu kleine Berge, die unnatürlich wirken)
 
     // Noise-Generator initialisieren
     FastNoiseLite fastNoiseLite = new FastNoiseLite(new Random().nextInt());
@@ -58,10 +59,10 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
 
     // Liste zur Nachverfolgung der gezeichneten Asset-Positionen
     List<Coordinate> drawnAssets = new ArrayList<>();
-
+    Random stepRandomizer = new Random();
     // Schleife über alle Punkte im Envelope mit festem Schritt (stepSize)
-    for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x += stepSize) {
-      for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y += stepSize) {
+    for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x += stepSize + stepRandomizer.nextInt(10)) {
+      for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y += stepSize + stepRandomizer.nextInt(10)) {
         Coordinate point = new Coordinate(x, y);
 
         // Prüfen, ob der Punkt zu nahe an einem anderen Asset liegt
@@ -83,15 +84,17 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
 
           if (polygon.contains(new GeometryFactory().createPoint(point))) {
             int mountainSize = (int) (5 + Math.pow(normalizedValue, 3) * 100 * mountainSizeFactor);
+            System.out.println(mountainSize);
+            if (mountainSize >= minMountainSize) {
+              // Randomly flip the image
+              Image finalMountainImage = random.nextBoolean() ? flipImageHorizontally(mountainImage) : mountainImage;
 
-            // Randomly flip the image
-            Image finalMountainImage = random.nextBoolean() ? flipImageHorizontally(mountainImage) : mountainImage;
+              // Berg zeichnen
+              generatedMapModel.addAsset((int) point.getX(), (int) point.getY(), finalMountainImage, mountainSize);
 
-            // Berg zeichnen
-            generatedMapModel.addAsset((int) point.getX(), (int) point.getY(), finalMountainImage, mountainSize);
-
-            // Gezeichnete Position speichern
-            drawnAssets.add(point);
+              // Gezeichnete Position speichern
+              drawnAssets.add(point);
+            }
           }
         }
       }
