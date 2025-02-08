@@ -44,6 +44,17 @@ public class ResultController extends AbstractController implements DataReceiver
   }
 
   @FXML
+  private void addFilters() {
+    GraphicsContext gc = resultCanvas.getGraphicsContext2D();
+    gc.clearRect(0, 0, resultCanvas.getWidth(), resultCanvas.getHeight());
+
+    mapGenerationService.addFiltersToImage();
+
+    WritableImage processedImage = mapGenerationService.getImage();
+    gc.drawImage(processedImage, 0, 0);
+  }
+
+  @FXML
   private void handleExport() {
     // Create a FileChooser for the user to select the export location
     FileChooser fileChooser = new FileChooser();

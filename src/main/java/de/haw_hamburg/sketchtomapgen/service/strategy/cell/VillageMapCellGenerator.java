@@ -114,6 +114,12 @@ public class VillageMapCellGenerator implements MapCellGenerationStrategy {
 
   private static List<LineString> computeMST(List<Point> points, GeometryFactory gf) {
     int n = points.size();
+
+    // Wenn keine Punkte in der Liste enthalten sind
+    if (n == 0) {
+      return new ArrayList<>();
+    }
+
     boolean[] inTree = new boolean[n];
     double[] minDist = new double[n];
     int[] parent = new int[n];
