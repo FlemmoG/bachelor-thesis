@@ -6,6 +6,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 
+<?import javafx.scene.layout.VBox?>
 <BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="de.haw_hamburg.sketchtomapgen.controller.ResultController">
     <center>
         <StackPane>
@@ -13,12 +14,14 @@
             <Canvas fx:id="resultCanvas" width="800" height="600" style="-fx-border-color: black; -fx-background-color: white;"/>
         </StackPane>
     </center>
-    <bottom>
-        <HBox spacing="20" alignment="CENTER" style="-fx-padding: 10;">
+    <right>
+        <VBox minWidth="200" prefWidth="200" maxWidth="200" spacing="20" alignment="CENTER" style="-fx-border-color: black; -fx-padding: 10;">
             <!-- Restart Button -->
             <Button fx:id="restartButton" text="Restart" minWidth="100" minHeight="40" onAction="#handleRestart"/>
             <!-- Export Button -->
             <Button fx:id="exportButton" text="Exportieren" minWidth="100" minHeight="40" onAction="#handleExport"/>
-        </HBox>
-    </bottom>
+            <!-- Filters Button -->
+            <Button fx:id="filtersButton" text="Filter hinzufügen" minWidth="100" minHeight="40" onAction="#addFilters"/>
+        </VBox>
+    </right>
 </BorderPane>

@@ -62,10 +62,9 @@ public class MapGenerationService {
     }
     addRiversToMap();
     addLabelsToMap();
-    addFiltersToImage();
   }
 
-  private void addFiltersToImage() {
+  public void addFiltersToImage() {
     WritableImage noisyImage = addNoise(generatedMapModel.getWritableImage(), 0.1);
 
     ColorAdjust colorAdjust = new ColorAdjust();
