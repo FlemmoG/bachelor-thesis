@@ -83,7 +83,15 @@ public class RegionPartitioningService {
           Icon icon = icons.get(nearestIconCoord);
 
           if (icon != null) {
-            Color color = Color.rgb(random.nextInt(256), random.nextInt(256), random.nextInt(256), 0.5);
+            Color color = switch (icon) {
+              case MOUNTAIN -> Color.rgb(139, 69, 19, 0.5); // Braun für Berge
+              case TREE -> Color.rgb(34, 139, 34, 0.5); // Dunkelgrün für Bäume
+              case WATER -> Color.rgb(0, 191, 255, 0.5); // Hellblau für Wasser
+              case VILLAGE -> Color.rgb(184, 134, 11, 0.5); // Goldbraun für Dörfer
+              case BLANK -> Color.rgb(200, 200, 200, 0.5); // Grauton für leere Zellen
+              case OCEAN -> Color.rgb(0, 0, 139, 0.5); // Dunkelblau für Ozeane
+            };
+
             CellModel cellModel = new CellModel(polygon, color, icon, nearestIconCoord);
             voronoiCellModels.add(cellModel);
           }
@@ -125,18 +133,74 @@ public class RegionPartitioningService {
   public WritableImage getImage() {
     WritableImage image = new WritableImage(width, height);
     PixelWriter pixelWriter = image.getPixelWriter();
-    GeometryFactory geometryFactory = new GeometryFactory();
 
+    // Für jedes Zellmodell (jede Zelle mit einem Polygon)
     for (CellModel cellModel : voronoiCellModels) {
       Polygon polygon = cellModel.getPolygon();
       Envelope envelope = polygon.getEnvelopeInternal();
 
-      for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x++) {
-        for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y++) {
-          if (x >= 0 && x < width && y >= 0 && y < height) {
-            Coordinate point = new Coordinate(x, y);
-            if (polygon.contains(geometryFactory.createPoint(point))) {
-              pixelWriter.setColor(x, y, cellModel.getColor());
+      // Bestimme den y-Bereich (Scanlines), der das Polygon umfasst,
+      // dabei wird auf die Bildgrenzen geachtet.
+      int yMin = Math.max((int) Math.ceil(envelope.getMinY()), 0);
+      int yMax = Math.min((int) Math.floor(envelope.getMaxY()), height - 1);
+
+      // Hole die Koordinaten der äußeren Hülle (Exterior-Ring)
+      Coordinate[] outerCoords = polygon.getExteriorRing().getCoordinates();
+
+      // Für jede Scanline
+      for (int y = yMin; y <= yMax; y++) {
+        List<Double> intersections = new ArrayList<>();
+
+        // --- Außenring verarbeiten ---
+        // Iteriere über alle Kanten des Außenrings.
+        // (Da der Ring geschlossen ist, enthält outerCoords[outerCoords.length-1] denselben Punkt wie outerCoords[0])
+        for (int i = 0; i < outerCoords.length - 1; i++) {
+          Coordinate p1 = outerCoords[i];
+          Coordinate p2 = outerCoords[i + 1];
+
+          // Wir berücksichtigen eine Kante nur, wenn die Scanline zwischen den y-Koordinaten der Endpunkte liegt.
+          // Dabei wird der Fall, dass die Scanline genau einen Endpunkt trifft, nur einmal gezählt.
+          if ((p1.y <= y && p2.y > y) || (p2.y <= y && p1.y > y)) {
+            // Berechne den Schnittpunkt der horizontalen Linie y mit der Kante (p1,p2)
+            double x = p1.x + (y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y);
+            intersections.add(x);
+          }
+        }
+
+        // --- Innenringe (Löcher) verarbeiten ---
+        int numHoles = polygon.getNumInteriorRing();
+        for (int r = 0; r < numHoles; r++) {
+          Coordinate[] holeCoords = polygon.getInteriorRingN(r).getCoordinates();
+          for (int i = 0; i < holeCoords.length - 1; i++) {
+            Coordinate p1 = holeCoords[i];
+            Coordinate p2 = holeCoords[i + 1];
+
+            if ((p1.y <= y && p2.y > y) || (p2.y <= y && p1.y > y)) {
+              double x = p1.x + (y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y);
+              intersections.add(x);
+            }
+          }
+        }
+
+        // Sortiere die Schnittpunkte von links nach rechts
+        Collections.sort(intersections);
+
+        // Fülle die Pixel zwischen jeweils zwei benachbarten Schnittpunkten.
+        // Dabei gehen wir davon aus, dass das innere des Polygons durch die gerade Anzahl
+        // von Schnittpunkten und das even-odd-Prinzip korrekt abgedeckt ist.
+        for (int i = 0; i < intersections.size(); i += 2) {
+          if (i + 1 < intersections.size()) {
+            int xStart = (int) Math.ceil(intersections.get(i));
+            int xEnd   = (int) Math.floor(intersections.get(i + 1));
+
+            // Optional: x-Koordinaten auf den Bereich des Envelopes bzw. Bildes beschränken
+            xStart = Math.max(xStart, (int) Math.ceil(envelope.getMinX()));
+            xEnd   = Math.min(xEnd, (int) Math.floor(envelope.getMaxX()));
+
+            for (int x = xStart; x <= xEnd; x++) {
+              if (x >= 0 && x < width) {
+                pixelWriter.setColor(x, y, cellModel.getColor());
+              }
             }
           }
         }
@@ -144,6 +208,7 @@ public class RegionPartitioningService {
     }
     return image;
   }
+
 
   private Coordinate findNearestIconCoordinate(Coordinate centroid, Map<Coordinate, Icon> icons) {
     double minDistance = Double.MAX_VALUE;

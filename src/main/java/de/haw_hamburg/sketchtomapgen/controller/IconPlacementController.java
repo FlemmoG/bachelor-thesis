@@ -20,6 +20,10 @@ import org.locationtech.jts.geom.Coordinate;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class IconPlacementController extends AbstractController implements DataReceiver {
   @FXML
@@ -44,12 +48,46 @@ public class IconPlacementController extends AbstractController implements DataR
   private final int CUSTOM_CURSOR_SIZE = 32;
   private RegionPartitioningService regionPartitioningService;
   private Icon activeIcon = Icon.BLANK;
+  private Map<Coordinate ,Icon> icons;
 
   @FXML
   private void initialize() {
+    icons = new HashMap<>();
     regionPartitioningService = new RegionPartitioningService((int) drawingCanvas.getWidth(), (int) drawingCanvas.getHeight());
 
     addMouseEventHandlers();
+  }
+
+  private void updateCanvas() {
+    GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+    gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
+
+    regionPartitioningService.computeVoronoiFromIcons();
+
+    WritableImage processedImage = regionPartitioningService.getImage();
+    gc.drawImage(processedImage, 0, 0);
+
+    for (Map.Entry<Coordinate, Icon> entry : icons.entrySet()) {
+      Coordinate coord = entry.getKey();
+      Icon icon = entry.getValue();
+      URL imageUrl = getImageUrlForIcon(icon); // Methode zur Bestimmung des Bildpfads
+
+      if (imageUrl != null) {
+        Image image = new Image(String.valueOf(imageUrl), CUSTOM_CURSOR_SIZE, CUSTOM_CURSOR_SIZE, true, true);
+        gc.drawImage(image, coord.getX() - CUSTOM_CURSOR_SIZE / 2.0, coord.getY() - CUSTOM_CURSOR_SIZE / 2.0);
+      }
+    }
+  }
+
+  private URL getImageUrlForIcon(Icon icon) {
+    return switch (icon) {
+      case MOUNTAIN -> getClass().getResource(AssetRoutes.MOUNTAINS_ASSET);
+      case TREE -> getClass().getResource(AssetRoutes.TREES_ASSET);
+      case WATER -> getClass().getResource(AssetRoutes.WATER_ASSET);
+      case VILLAGE -> getClass().getResource(AssetRoutes.VILLAGE_ASSET);
+      case BLANK -> null;
+      case OCEAN -> null;
+    };
   }
 
   private void finishPlacement() {
@@ -146,6 +184,8 @@ public class IconPlacementController extends AbstractController implements DataR
                   e.getX() - CUSTOM_CURSOR_SIZE / 2.0,
                   e.getY() - CUSTOM_CURSOR_SIZE / 2.0
           );
+          Coordinate coordinate = new Coordinate(e.getX(), e.getY());
+          icons.put(coordinate, Icon.TREE);
           regionPartitioningService.addIcon(new Coordinate(e.getX(), e.getY()), Icon.TREE);
         }
         case WATER -> {
@@ -155,7 +195,9 @@ public class IconPlacementController extends AbstractController implements DataR
                   e.getX() - CUSTOM_CURSOR_SIZE / 2.0,
                   e.getY() - CUSTOM_CURSOR_SIZE / 2.0
           );
-          regionPartitioningService.addIcon(new Coordinate(e.getX(), e.getY()), Icon.WATER);
+          Coordinate coordinate = new Coordinate(e.getX(), e.getY());
+          icons.put(coordinate, Icon.WATER);
+          regionPartitioningService.addIcon(coordinate, Icon.WATER);
         }
         case VILLAGE -> {
           // Draw village asset on the canvas at the mouse click position
@@ -164,6 +206,8 @@ public class IconPlacementController extends AbstractController implements DataR
                   e.getX() - CUSTOM_CURSOR_SIZE / 2.0,
                   e.getY() - CUSTOM_CURSOR_SIZE / 2.0
           );
+          Coordinate coordinate = new Coordinate(e.getX(), e.getY());
+          icons.put(coordinate, Icon.VILLAGE);
           regionPartitioningService.addIcon(new Coordinate(e.getX(), e.getY()), Icon.VILLAGE);
         }
         case MOUNTAIN -> {
@@ -173,12 +217,15 @@ public class IconPlacementController extends AbstractController implements DataR
                   e.getX() - CUSTOM_CURSOR_SIZE / 2.0,
                   e.getY() - CUSTOM_CURSOR_SIZE / 2.0
           );
+          Coordinate coordinate = new Coordinate(e.getX(), e.getY());
+          icons.put(coordinate, Icon.MOUNTAIN);
           regionPartitioningService.addIcon(new Coordinate(e.getX(), e.getY()), Icon.MOUNTAIN);
         }
         default -> {
           //ignore
         }
       }
+      updateCanvas();
     });
   }
 
