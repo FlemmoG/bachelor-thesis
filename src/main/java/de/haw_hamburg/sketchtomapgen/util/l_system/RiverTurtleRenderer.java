@@ -7,6 +7,8 @@ import de.haw_hamburg.sketchtomapgen.util.GlobalColors;
 import de.haw_hamburg.sketchtomapgen.util.Icon;
 import javafx.scene.paint.Color;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.prep.PreparedGeometry;
+import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 
 import java.util.Comparator;
 import java.util.Stack;
@@ -19,6 +21,7 @@ public class RiverTurtleRenderer {
   private final double angleIncrement;
   private final Stack<TurtleState> stack;
   private Geometry boundaryPolygon;
+  private PreparedGeometry preparedPolygon;
   private GeometryFactory geometryFactory;
   private final double initialX, initialY;
   private final CellModelCollection cellModels;
@@ -35,6 +38,7 @@ public class RiverTurtleRenderer {
     this.angleIncrement = angleIncrement;
     this.stack = new Stack<>();
     this.boundaryPolygon = boundary;
+    this.preparedPolygon = PreparedGeometryFactory.prepare(boundary);
     this.geometryFactory = new GeometryFactory();
     this.initialX = startX;
     this.initialY = startY;
@@ -89,23 +93,6 @@ public class RiverTurtleRenderer {
 
   private double distanceToBoundary(Coordinate pixelCoord){
     return geometryFactory.createPoint(pixelCoord).distance(boundaryPolygon.getBoundary());
-  }
-
-  private Coordinate getClosestLake(Coordinate coordinate) {
-    CellModel closestLake = null;
-    double minDistance = Double.MAX_VALUE;
-
-    for (CellModel cellModel : cellModels) {
-      if (cellModel.getIcon() == Icon.WATER) {
-        double distance = coordinate.distance(cellModel.getCentroid());
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestLake = cellModel;
-        }
-      }
-    }
-
-    return closestLake != null ? closestLake.getCentroid() : null;
   }
 
   private boolean isLake(Coordinate pixelCoord) {
@@ -192,12 +179,13 @@ public class RiverTurtleRenderer {
 
   private boolean isValidPosition(int x, int y) {
     Point p = geometryFactory.createPoint(new Coordinate(x, y));
-    return boundaryPolygon.contains(p) && !isMountain(x, y);
+    return preparedPolygon.contains(p) && !isMountain(x, y);
   }
 
   private boolean isMountain(int x, int y) {
     for (CellModel cell : cellModels) {
-      if (cell.getPolygon().contains(geometryFactory.createPoint(new Coordinate(x, y)))) {
+      PreparedGeometry preparedGeometry = PreparedGeometryFactory.prepare(cell.getPolygon());
+      if (preparedGeometry.contains(geometryFactory.createPoint(new Coordinate(x, y)))) {
         return cell.getIcon() == Icon.MOUNTAIN;
       }
     }
