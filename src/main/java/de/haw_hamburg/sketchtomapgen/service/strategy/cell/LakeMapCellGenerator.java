@@ -5,6 +5,8 @@ import de.haw_hamburg.sketchtomapgen.model.CellModel;
 import de.haw_hamburg.sketchtomapgen.util.GlobalColors;
 import javafx.scene.paint.Color;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.prep.PreparedGeometry;
+import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 import org.locationtech.jts.operation.distance.DistanceOp;
 
 
@@ -75,14 +77,17 @@ public class LakeMapCellGenerator implements MapCellGenerationStrategy {
   private void renderLake(GeneratedMapModel model, Geometry boundary, Geometry lake) {
     Envelope env = boundary.getEnvelopeInternal();
     GeometryFactory gf = new GeometryFactory();
+    PreparedGeometry preparedCellPolygonLake = PreparedGeometryFactory.prepare(lake);
+    PreparedGeometry preparedCellPolygonBoundary = PreparedGeometryFactory.prepare(boundary);
+
 
     for(int x = (int)env.getMinX(); x <= env.getMaxX(); x++) {
       for(int y = (int)env.getMinY(); y <= env.getMaxY(); y++) {
         Coordinate c = new Coordinate(x, y);
         Point p = gf.createPoint(c);
 
-        if(boundary.contains(p)) {
-          Color color = lake.contains(p)
+        if(preparedCellPolygonBoundary.covers(p)) {
+          Color color = preparedCellPolygonLake.covers(p)
                   ? lakeColorForPosition(p, lake.getCentroid(), p.distance(lake.getBoundary()))
                   : GlobalColors.TOTALLY_FLAT;
           model.addPixel(x, y, color);

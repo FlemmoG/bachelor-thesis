@@ -9,6 +9,8 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.prep.PreparedGeometry;
+import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 
 import java.util.Random;
 
@@ -22,6 +24,7 @@ public class OceanMapCellGenerator implements MapCellGenerationStrategy{
     noiseGenerator.SetFrequency(NOISE_FREQUENCY);
 
     Polygon cellPolygon = cellModel.getPolygon();
+    PreparedGeometry preparedCellPolygon = PreparedGeometryFactory.prepare(cellPolygon);
     Envelope envelope = cellPolygon.getEnvelopeInternal();
     double minX = cellPolygon.getEnvelopeInternal().getMinX();
     double minY = cellPolygon.getEnvelopeInternal().getMinY();
@@ -34,7 +37,7 @@ public class OceanMapCellGenerator implements MapCellGenerationStrategy{
         double normalizedY = (double) y / generatedMapModel.getHeight();
         Coordinate coordinate = new Coordinate(x, y);
 
-        if (cellPolygon.covers(new GeometryFactory().createPoint(coordinate))
+        if (preparedCellPolygon.covers(new GeometryFactory().createPoint(coordinate))
                 && coordinate.x > 0 && coordinate.x < generatedMapModel.getWidth()
                 && coordinate.y > 0 && coordinate.y < generatedMapModel.getHeight()
         ) {

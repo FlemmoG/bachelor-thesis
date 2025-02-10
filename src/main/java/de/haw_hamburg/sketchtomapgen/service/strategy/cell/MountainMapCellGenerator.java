@@ -15,6 +15,8 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.prep.PreparedGeometry;
+import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -40,12 +42,13 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
     // Voronoi-Polygon und dessen Envelope holen
     Polygon polygon = cellModel.getPolygon();
     Envelope envelope = polygon.getEnvelopeInternal();
+    PreparedGeometry preparedCellPolygon = PreparedGeometryFactory.prepare(polygon);
 
     // Grundfläche
     for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x++) {
       for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y++) {
         Coordinate point = new Coordinate(x, y);
-        if (polygon.contains(new GeometryFactory().createPoint(point))) {
+        if (preparedCellPolygon.covers(new GeometryFactory().createPoint(point))) {
           generatedMapModel.addPixel(x,y, GlobalColors.TOTALLY_FLAT);
         }
       }
@@ -82,7 +85,7 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
         // Nur zeichnen, wenn der Noise-Wert hoch genug ist
         if (normalizedValue > noiseThreshold) {
 
-          if (polygon.contains(new GeometryFactory().createPoint(point))) {
+          if (preparedCellPolygon.covers(new GeometryFactory().createPoint(point))) {
             int mountainSize = (int) (5 + Math.pow(normalizedValue, 3) * 100 * mountainSizeFactor);
             System.out.println(mountainSize);
             if (mountainSize >= minMountainSize) {

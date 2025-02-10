@@ -16,6 +16,8 @@ import java.net.URL;
 import java.util.Random;
 
 import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.prep.PreparedGeometry;
+import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 import org.locationtech.jts.operation.distance.DistanceOp;
 
 public class ForestMapCellGenerator implements MapCellGenerationStrategy {
@@ -42,6 +44,7 @@ public class ForestMapCellGenerator implements MapCellGenerationStrategy {
       int outputHeight = maxY - minY + 1;
 
       Geometry cellBoundary = cellPolygon.getBoundary();
+      PreparedGeometry preparedCellPolygon = PreparedGeometryFactory.prepare(cellPolygon);
 
       OverlappingModel model = new OverlappingModel(
               inputImage,
@@ -67,7 +70,7 @@ public class ForestMapCellGenerator implements MapCellGenerationStrategy {
         for (int x = minX; x <= maxX; x++) {
           for (int y = minY; y <= maxY; y++) {
             Coordinate coord = new Coordinate(x, y);
-            if (cellPolygon.contains(GEOMETRY_FACTORY.createPoint(coord))) {
+            if (preparedCellPolygon.covers(GEOMETRY_FACTORY.createPoint(coord))) {
               int imgX = x - minX;
               int imgY = y - minY;
 

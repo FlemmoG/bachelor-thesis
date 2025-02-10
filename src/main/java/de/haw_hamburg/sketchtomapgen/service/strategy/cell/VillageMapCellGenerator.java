@@ -5,6 +5,8 @@ import de.haw_hamburg.sketchtomapgen.model.CellModel;
 import de.haw_hamburg.sketchtomapgen.util.GlobalColors;
 import javafx.scene.paint.Color;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.prep.PreparedGeometry;
+import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 
 import java.util.*;
 
@@ -33,12 +35,13 @@ public class VillageMapCellGenerator implements MapCellGenerationStrategy {
     Polygon polygon = cellModel.getPolygon();
     Envelope envelope = polygon.getEnvelopeInternal();
     GeometryFactory gf = new GeometryFactory();
+    PreparedGeometry preparedCellPolygon = PreparedGeometryFactory.prepare(polygon);
 
     // Grundfarbe
     for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x++) {
       for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y++) {
         Coordinate point = new Coordinate(x, y);
-        if (polygon.contains(gf.createPoint(point))) {
+        if (preparedCellPolygon.covers(gf.createPoint(point))) {
           generatedMapModel.addPixel(x, y, GlobalColors.TOTALLY_FLAT);
         }
       }
@@ -99,13 +102,15 @@ public class VillageMapCellGenerator implements MapCellGenerationStrategy {
     List<Point> seedPoints = new ArrayList<>();
     Envelope envelope = polygon.getEnvelopeInternal();
     Random random = new Random();
+    PreparedGeometry preparedCellPolygon = PreparedGeometryFactory.prepare(polygon);
+
 
     // Erzeuge Punkte
     while (seedPoints.size() < numSeeds) {
       double x = envelope.getMinX() + random.nextDouble() * envelope.getWidth();
       double y = envelope.getMinY() + random.nextDouble() * envelope.getHeight();
       Point p = gf.createPoint(new Coordinate(x, y));
-      if (polygon.contains(p)) {
+      if (preparedCellPolygon.covers(p)) {
         seedPoints.add(p);
       }
     }
