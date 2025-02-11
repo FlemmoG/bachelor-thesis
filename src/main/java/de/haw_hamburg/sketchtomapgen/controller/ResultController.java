@@ -3,6 +3,8 @@ package de.haw_hamburg.sketchtomapgen.controller;
 import de.haw_hamburg.sketchtomapgen.model.collection.CellModelCollection;
 import de.haw_hamburg.sketchtomapgen.service.MapGenerationService;
 import de.haw_hamburg.sketchtomapgen.util.DataReceiver;
+import de.haw_hamburg.sketchtomapgen.util.Icon;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -34,13 +36,8 @@ public class ResultController extends AbstractController implements DataReceiver
 //    } catch (IOException e) {
 //      throw new RuntimeException(e);
 //    }
-    GraphicsContext gc = resultCanvas.getGraphicsContext2D();
-    gc.clearRect(0, 0, resultCanvas.getWidth(), resultCanvas.getHeight());
-
-    mapGenerationService.generateMap();
-
-    WritableImage processedImage = mapGenerationService.getImage();
-    gc.drawImage(processedImage, 0, 0);
+    mapGenerationService.resetService();
+    portrayResult();
   }
 
   @FXML
@@ -106,10 +103,38 @@ public class ResultController extends AbstractController implements DataReceiver
   }
 
   private void portrayResult() {
+    drawStep(Icon.OCEAN, () ->
+            drawStep(Icon.MOUNTAIN, () ->
+                    drawStep(Icon.VILLAGE, () ->
+                            drawStep(Icon.TREE, () ->
+                                    drawStep(Icon.WATER, () ->
+                                            drawStep(null, () -> {
+                                              mapGenerationService.addDetails();
+                                              clearCanvasAndDrawImage();
+                                            })
+                                    )
+                            )
+                    )
+            )
+    );
+  }
+
+  private void drawStep(Icon icon, Runnable nextStep) {
+    Platform.runLater(() -> {
+      if (icon != null) {
+        mapGenerationService.generateMap(icon);
+      }
+      clearCanvasAndDrawImage();
+      if (nextStep != null) {
+        nextStep.run();
+      }
+    });
+  }
+
+
+  private void clearCanvasAndDrawImage() {
     GraphicsContext gc = resultCanvas.getGraphicsContext2D();
     gc.clearRect(0, 0, resultCanvas.getWidth(), resultCanvas.getHeight());
-
-    mapGenerationService.generateMap();
 
     WritableImage processedImage = mapGenerationService.getImage();
     gc.drawImage(processedImage, 0, 0);

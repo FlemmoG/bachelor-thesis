@@ -43,6 +43,10 @@ public class MapGenerationService {
     strategyMap.put(Icon.OCEAN, new OceanMapCellGenerator());
   }
 
+  public void resetService() {
+    generatedMapModel = new GeneratedMapModel(width, height);
+  }
+
   public void initializeService(CellModelCollection voronoiCellModels){
     this.voronoiCellModels = voronoiCellModels;
   }
@@ -59,6 +63,36 @@ public class MapGenerationService {
       } else {
         throw new ImplementationMismatchException("No strategy implementation found for icon type: " + cell.getIcon());
       }
+    }
+    addRiversToMap();
+    addLabelsToMap();
+  }
+
+  public void generateMap(Icon icon){
+    if (voronoiCellModels == null) {
+      throw new IllegalStateException("Service not initialized");
+    }
+    if (generatedMapModel == null) {
+      generatedMapModel = new GeneratedMapModel(width, height);
+    }
+    for (CellModel cell : voronoiCellModels) {
+      if (cell.getIcon() == icon) {
+        MapCellGenerationStrategy strategy = strategyMap.get(icon);
+        if (strategy != null) {
+          strategy.generateMap(cell, generatedMapModel);
+        } else {
+          throw new ImplementationMismatchException("No strategy implementation found for icon type: " + cell.getIcon());
+        }
+      }
+    }
+  }
+
+  public void addDetails() {
+    if (voronoiCellModels == null) {
+      throw new IllegalStateException("Service not initialized");
+    }
+    if (generatedMapModel == null) {
+      generatedMapModel = new GeneratedMapModel(width, height);
     }
     addRiversToMap();
     addLabelsToMap();

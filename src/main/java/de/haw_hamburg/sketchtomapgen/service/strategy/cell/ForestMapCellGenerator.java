@@ -94,7 +94,7 @@ public class ForestMapCellGenerator implements MapCellGenerationStrategy {
           }
         }
       } else {
-        System.out.println("WFC-Generierung fehlgeschlagen");
+        System.out.println("Undefinierter WFC Algorithmus Fehler");
       }
     } catch (IOException e) {
       e.printStackTrace();

@@ -15,16 +15,15 @@ import org.locationtech.jts.triangulate.VoronoiDiagramBuilder;
 import java.util.*;
 
 import static de.haw_hamburg.sketchtomapgen.util.Icon.OCEAN;
-import static de.haw_hamburg.sketchtomapgen.util.Icon.WATER;
 
 public class RegionPartitioningService {
   private SketchModel sketchModel;
   private CellModelCollection voronoiCellModels;
-  private int width;
-  private int height;
+  private final int width;
+  private final int height;
   private GeometryCollection concaveHullsForClusters;
-  private GeometryFactory geometryFactory;
-  private Envelope totalAreaEnvelope;
+  private final GeometryFactory geometryFactory;
+  private final Envelope totalAreaEnvelope;
 
   public RegionPartitioningService(int width, int height){
     this.width = width;
@@ -47,7 +46,6 @@ public class RegionPartitioningService {
     Map<Coordinate, Icon> icons = sketchModel.getIcons();
 
     CellModelCollection voronoiCellModels = new CellModelCollection();
-    Random random = new Random();
 
     Geometry nonCoveredArea = getTotalArea();
 
