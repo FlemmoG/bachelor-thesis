@@ -22,10 +22,15 @@ public class RegionPartitioningService {
   private CellModelCollection voronoiCellModels;
   private int width;
   private int height;
+  private GeometryCollection concaveHullsForClusters;
+  private GeometryFactory geometryFactory;
+  private Envelope totalAreaEnvelope;
 
   public RegionPartitioningService(int width, int height){
     this.width = width;
     this.height = height;
+    geometryFactory = new GeometryFactory();
+    totalAreaEnvelope = new Envelope(0, width, 0, height);
   }
   public void initializeService(SketchModel sketchModel){
     this.sketchModel = sketchModel;
@@ -36,7 +41,9 @@ public class RegionPartitioningService {
   }
 
   public void computeVoronoiFromIcons() {
-    GeometryCollection concaveHullsForClusters = sketchModel.getConcaveHullsForClusters();
+    if (concaveHullsForClusters == null) {
+      concaveHullsForClusters = sketchModel.getConcaveHullsForClusters();
+    }
     Map<Coordinate, Icon> icons = sketchModel.getIcons();
 
     CellModelCollection voronoiCellModels = new CellModelCollection();
@@ -45,12 +52,13 @@ public class RegionPartitioningService {
     Geometry nonCoveredArea = getTotalArea();
 
     for (int i = 0; i < concaveHullsForClusters.getNumGeometries(); i++) {
+      System.out.println(concaveHullsForClusters.getNumGeometries());
       Geometry concaveHull = concaveHullsForClusters.getGeometryN(i);
 
       // Filter points within the current concave hull
       List<Coordinate> pointsWithinHull = new ArrayList<>();
       for (Coordinate coord : icons.keySet()) {
-        if (concaveHull.covers(new GeometryFactory().createPoint(coord))) {
+        if (concaveHull.covers(geometryFactory.createPoint(coord))) {
           pointsWithinHull.add(coord);
         }
       }
@@ -62,40 +70,47 @@ public class RegionPartitioningService {
         Coordinate singlePoint = pointsWithinHull.get(0);
         Icon icon = icons.get(singlePoint);
         if (icon != null) {
-          Color color = Color.rgb(random.nextInt(256), random.nextInt(256), random.nextInt(256), 0.5);
-          CellModel cellModel = new CellModel((Polygon) concaveHull, color, icon, singlePoint);
+          CellModel cellModel = new CellModel((Polygon) concaveHull, getColor(icon), icon, singlePoint);
           voronoiCellModels.add(cellModel);
           nonCoveredArea = nonCoveredArea.difference(concaveHull);
         }
         continue;
       }
 
+
       VoronoiDiagramBuilder voronoiDiagramBuilder = new VoronoiDiagramBuilder();
       voronoiDiagramBuilder.setSites(pointsWithinHull);
-      Geometry voronoiDiagram = voronoiDiagramBuilder.getDiagram(new GeometryFactory());
+      voronoiDiagramBuilder.setClipEnvelope(totalAreaEnvelope);
+      Geometry voronoiDiagram = voronoiDiagramBuilder.getDiagram(geometryFactory);
 
       for (int j = 0; j < voronoiDiagram.getNumGeometries(); j++) {
         Geometry cell = voronoiDiagram.getGeometryN(j);
-        Geometry clippedCell = cell.intersection(concaveHull);
+        //Geometry clippedCell = cell.intersection(concaveHull);
 
-        if (!clippedCell.isEmpty() && clippedCell instanceof Polygon polygon) {
+        if (!cell.isEmpty() && cell instanceof Polygon polygon) {
           // Get the centroid and find nearest icon
           Coordinate centroid = polygon.getCentroid().getCoordinate();
           Coordinate nearestIconCoord = findNearestIconCoordinate(centroid, icons);
           Icon icon = icons.get(nearestIconCoord);
 
           if (icon != null) {
-            Color color = switch (icon) {
-              case MOUNTAIN -> Color.rgb(139, 69, 19, 0.5); // Braun für Berge
-              case TREE -> Color.rgb(34, 139, 34, 0.5); // Dunkelgrün für Bäume
-              case WATER -> Color.rgb(0, 191, 255, 0.5); // Hellblau für Wasser
-              case VILLAGE -> Color.rgb(184, 134, 11, 0.5); // Goldbraun für Dörfer
-              case BLANK -> Color.rgb(200, 200, 200, 0.5); // Grauton für leere Zellen
-              case OCEAN -> Color.rgb(0, 0, 139, 0.5); // Dunkelblau für Ozeane
-            };
-
-            CellModel cellModel = new CellModel(polygon, color, icon, nearestIconCoord);
-            voronoiCellModels.add(cellModel);
+            Color color = getColor(icon);
+            Geometry clippedCell = polygon.intersection(concaveHull);
+            List<Polygon> polygons = new ArrayList<>();
+            if (clippedCell instanceof Polygon clippedPolygon) {
+              polygons.add(clippedPolygon);
+            } else if (clippedCell instanceof MultiPolygon clippedMultiPolygon) {
+              for (int k = 0; k < clippedMultiPolygon.getNumGeometries(); k++) {
+                Geometry geom = clippedMultiPolygon.getGeometryN(k);
+                if (geom instanceof Polygon) {
+                  polygons.add((Polygon) geom);
+                }
+              }
+            }
+            for (Polygon clippedPolygon : polygons) {
+              CellModel cellModel = new CellModel(clippedPolygon, color, icon, nearestIconCoord);
+              voronoiCellModels.add(cellModel);
+            }
           }
         }
       }
@@ -118,8 +133,18 @@ public class RegionPartitioningService {
     this.voronoiCellModels = voronoiCellModels;
   }
 
+  private static Color getColor(Icon icon) {
+    return switch (icon) {
+      case MOUNTAIN -> Color.rgb(139, 69, 19, 0.5); // Braun für Berge
+      case TREE -> Color.rgb(34, 139, 34, 0.5); // Dunkelgrün für Bäume
+      case WATER -> Color.rgb(0, 191, 255, 0.5); // Hellblau für Wasser
+      case VILLAGE -> Color.rgb(184, 134, 11, 0.5); // Goldbraun für Dörfer
+      case BLANK -> Color.rgb(200, 200, 200, 0.5); // Grauton für leere Zellen
+      case OCEAN -> Color.rgb(0, 0, 139, 0.5); // Dunkelblau für Ozeane
+    };
+  }
+
   private Geometry getTotalArea() {
-    GeometryFactory geometryFactory = new GeometryFactory();
     Coordinate[] coordinates = new Coordinate[] {
             new Coordinate(0, 0),
             new Coordinate(width, 0),
@@ -135,7 +160,6 @@ public class RegionPartitioningService {
   public WritableImage getImage() {
     WritableImage image = new WritableImage(width, height);
     PixelWriter pixelWriter = image.getPixelWriter();
-    GeometryFactory geometryFactory = new GeometryFactory();
 
     for (CellModel cellModel : voronoiCellModels) {
       Polygon polygon = cellModel.getPolygon();

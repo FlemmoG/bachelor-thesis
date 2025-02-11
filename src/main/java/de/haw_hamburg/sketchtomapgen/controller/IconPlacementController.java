@@ -91,12 +91,6 @@ public class IconPlacementController extends AbstractController implements DataR
   }
 
   private void finishPlacement() {
-    GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
-
-    regionPartitioningService.computeVoronoiFromIcons();
-
-    WritableImage processedImage = regionPartitioningService.getImage();
-    gc.drawImage(processedImage, 0, 0);
     satisfactionSection.setVisible(true);
   }
 
