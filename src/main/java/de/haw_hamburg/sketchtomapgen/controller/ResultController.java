@@ -4,6 +4,7 @@ import de.haw_hamburg.sketchtomapgen.model.collection.CellModelCollection;
 import de.haw_hamburg.sketchtomapgen.service.MapGenerationService;
 import de.haw_hamburg.sketchtomapgen.util.DataReceiver;
 import de.haw_hamburg.sketchtomapgen.util.Icon;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
@@ -11,6 +12,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.image.WritableImage;
 import javafx.stage.FileChooser;
+import javafx.util.Duration;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -107,27 +109,34 @@ public class ResultController extends AbstractController implements DataReceiver
             drawStep(Icon.MOUNTAIN, () ->
                     drawStep(Icon.VILLAGE, () ->
                             drawStep(Icon.TREE, () ->
-                                    drawStep(Icon.WATER, () ->
-                                            drawStep(null, () -> {
-                                              mapGenerationService.addDetails();
-                                              clearCanvasAndDrawImage();
-                                            })
-                                    )
+                                    drawStep(Icon.WATER, () -> {
+                                      PauseTransition pause = new PauseTransition(Duration.millis(50));
+                                      pause.setOnFinished(e -> {
+                                        mapGenerationService.addDetails();
+                                        clearCanvasAndDrawImage();
+                                      });
+                                      pause.play();
+                                    })
                             )
                     )
             )
     );
   }
 
+  // Pausen sind nötig, damit die Karte nach und nach aufgebaut wird
   private void drawStep(Icon icon, Runnable nextStep) {
     Platform.runLater(() -> {
       if (icon != null) {
         mapGenerationService.generateMap(icon);
       }
       clearCanvasAndDrawImage();
-      if (nextStep != null) {
-        nextStep.run();
-      }
+      PauseTransition pause = new PauseTransition(Duration.millis(50));
+      pause.setOnFinished(e -> {
+        if (nextStep != null) {
+          nextStep.run();
+        }
+      });
+      pause.play();
     });
   }
 
