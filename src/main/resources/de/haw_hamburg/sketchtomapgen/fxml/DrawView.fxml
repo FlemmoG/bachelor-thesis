@@ -16,21 +16,21 @@
     </center>
     <right>
         <VBox spacing="10" alignment="TOP_CENTER" style="-fx-border-color: black; -fx-border-width: 0 0 0 1; -fx-padding: 10;">
-            <Button fx:id="drawButton" text="Zeichnen (D)" minWidth="80">
+            <Button fx:id="drawButton" text="Draw (D)" minWidth="80">
                 <graphic>
                     <ImageView fitWidth="30" fitHeight="30" preserveRatio="true">
                         <Image url="@../assets/pen_asset.png" />
                     </ImageView>
                 </graphic>
             </Button>
-            <Button fx:id="eraseButton" text="Radieren (E)" minWidth="80">
+            <Button fx:id="eraseButton" text="Erase (E)" minWidth="80">
                 <graphic>
                     <ImageView fitWidth="30" fitHeight="30" preserveRatio="true">
                         <Image url="@../assets/eraser_asset.png" />
                     </ImageView>
                 </graphic>
             </Button>
-            <Button fx:id="generateButton" text="Generieren (Enter)" minWidth="80">
+            <Button fx:id="generateButton" text="Proceed (Enter)" minWidth="80">
                 <graphic>
                     <ImageView fitWidth="30" fitHeight="30" preserveRatio="true">
                         <Image url="@../assets/down_arrow_asset.png" />
