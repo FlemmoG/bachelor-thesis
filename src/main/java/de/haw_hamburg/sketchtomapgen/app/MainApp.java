@@ -15,7 +15,7 @@ public class MainApp extends Application {
 
   @Override
   public void start(Stage primaryStage) throws Exception {
-    // MainView laden
+    // Main view laden
     FXMLLoader loader = new FXMLLoader(getClass().getResource("/de/haw_hamburg/sketchtomapgen/fxml/MainView.fxml"));
     Parent mainView = loader.load();
 

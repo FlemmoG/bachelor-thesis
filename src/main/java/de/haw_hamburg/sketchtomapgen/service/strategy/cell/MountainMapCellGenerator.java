@@ -47,7 +47,7 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
     PreparedGeometry preparedCellPolygon = PreparedGeometryFactory.prepare(polygon);
 
     // Mountain-Asset laden
-    URL mountainImageUrl = getClass().getResource(AssetRoutes.MOUNTAINS_ASSET);
+    URL mountainImageUrl = getClass().getResource(AssetRoutes.MOUNTAIN_MAP_CELL_ASSET);
     Image mountainImage = new Image(String.valueOf(mountainImageUrl));
 
     Random random = new Random();

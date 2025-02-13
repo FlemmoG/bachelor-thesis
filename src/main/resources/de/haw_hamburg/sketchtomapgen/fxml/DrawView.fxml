@@ -19,21 +19,21 @@
             <Button fx:id="drawButton" text="Zeichnen (D)" minWidth="80">
                 <graphic>
                     <ImageView fitWidth="30" fitHeight="30" preserveRatio="true">
-                        <Image url="@../assets/pen.png" />
+                        <Image url="@../assets/pen_asset.png" />
                     </ImageView>
                 </graphic>
             </Button>
             <Button fx:id="eraseButton" text="Radieren (E)" minWidth="80">
                 <graphic>
                     <ImageView fitWidth="30" fitHeight="30" preserveRatio="true">
-                        <Image url="@../assets/rubber.png" />
+                        <Image url="@../assets/eraser_asset.png" />
                     </ImageView>
                 </graphic>
             </Button>
             <Button fx:id="generateButton" text="Generieren (Enter)" minWidth="80">
                 <graphic>
                     <ImageView fitWidth="30" fitHeight="30" preserveRatio="true">
-                        <Image url="@../assets/generate.png" />
+                        <Image url="@../assets/down_arrow_asset.png" />
                     </ImageView>
                 </graphic>
             </Button>

@@ -111,7 +111,7 @@ public class MapGenerationService {
     ImageView imageView = new ImageView(noisyImage);
     imageView.setEffect(colorAdjust);
 
-    URL textureUrl = getClass().getResource(AssetRoutes.PARCHMENT_TEXTURE);
+    URL textureUrl = getClass().getResource(AssetRoutes.PARCHMENT_OVERLAY_ASSET);
     Image parchmentTexture = new Image(String.valueOf(textureUrl));
     ImageView textureView = new ImageView(parchmentTexture);
     textureView.setBlendMode(BlendMode.MULTIPLY); // Farben interagieren

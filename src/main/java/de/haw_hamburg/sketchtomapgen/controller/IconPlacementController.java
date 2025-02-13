@@ -2,7 +2,6 @@ package de.haw_hamburg.sketchtomapgen.controller;
 
 import de.haw_hamburg.sketchtomapgen.model.SketchModel;
 import de.haw_hamburg.sketchtomapgen.service.RegionPartitioningService;
-import de.haw_hamburg.sketchtomapgen.util.AssetRoutes;
 import de.haw_hamburg.sketchtomapgen.util.DataReceiver;
 import de.haw_hamburg.sketchtomapgen.util.Icon;
 import de.haw_hamburg.sketchtomapgen.util.ViewRoutes;
@@ -42,11 +41,7 @@ public class IconPlacementController extends AbstractController implements DataR
   @FXML
   private Button undoButton;
   @FXML
-  private VBox satisfactionSection; // Section for satisfaction question
-  @FXML
-  private Button yesButton;
-  @FXML
-  private Button noButton;
+  private VBox satisfactionSection;
   private final int CUSTOM_CURSOR_SIZE = 32;
   private RegionPartitioningService regionPartitioningService;
   private Icon activeIcon = Icon.BLANK;
@@ -63,7 +58,8 @@ public class IconPlacementController extends AbstractController implements DataR
     addMouseEventHandlers();
   }
 
-  private void updateCanvas() {
+  // Updatet das Canvas und zeigt das Voronoi Diagramm auf Basis der aktuell gesetzten Icons an
+  private void portrayCellModelCollection() {
     GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
     gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
 
@@ -75,24 +71,12 @@ public class IconPlacementController extends AbstractController implements DataR
     for (Map.Entry<Coordinate, Icon> entry : icons.entrySet()) {
       Coordinate coord = entry.getKey();
       Icon icon = entry.getValue();
-      URL imageUrl = getImageUrlForIcon(icon); // Methode zur Bestimmung des Bildpfads
-
+      URL imageUrl = icon.getUrl(getClass());
       if (imageUrl != null) {
         Image image = new Image(String.valueOf(imageUrl), CUSTOM_CURSOR_SIZE, CUSTOM_CURSOR_SIZE, true, true);
         gc.drawImage(image, coord.getX() - CUSTOM_CURSOR_SIZE / 2.0, coord.getY() - CUSTOM_CURSOR_SIZE / 2.0);
       }
     }
-  }
-
-  private URL getImageUrlForIcon(Icon icon) {
-    return switch (icon) {
-      case MOUNTAIN -> getClass().getResource(AssetRoutes.MOUNTAINS_ASSET);
-      case TREE -> getClass().getResource(AssetRoutes.TREES_ASSET);
-      case WATER -> getClass().getResource(AssetRoutes.WATER_ASSET);
-      case VILLAGE -> getClass().getResource(AssetRoutes.VILLAGE_ASSET);
-      case BLANK -> null;
-      case OCEAN -> null;
-    };
   }
 
   @FXML
@@ -121,9 +105,9 @@ public class IconPlacementController extends AbstractController implements DataR
     if (sketchModel != null) {
       sketchModel.getIcons().remove(lastCoordinate);
       if (iconHistory.isEmpty()) {
-        portrayModel();
+        portraySketchModel();
       } else
-        updateCanvas();
+        portrayCellModelCollection();
     }
   }
 
@@ -158,7 +142,7 @@ public class IconPlacementController extends AbstractController implements DataR
       activeIcon = Icon.BLANK;
     });
 
-    URL mountainImageUrl = getClass().getResource(AssetRoutes.MOUNTAINS_ASSET);
+    URL mountainImageUrl = Icon.MOUNTAIN.getUrl(getClass());
     mountainButton.setOnAction(e -> {
               drawingCanvas.setCursor(
                       new ImageCursor(
@@ -171,7 +155,7 @@ public class IconPlacementController extends AbstractController implements DataR
             }
     );
 
-    URL treesImageUrl = getClass().getResource(AssetRoutes.TREES_ASSET);
+    URL treesImageUrl = Icon.TREE.getUrl(getClass());
     treeButton.setOnAction(e -> {
               drawingCanvas.setCursor(
                       new ImageCursor(
@@ -184,7 +168,7 @@ public class IconPlacementController extends AbstractController implements DataR
             }
     );
 
-    URL waterImageUrl = getClass().getResource(AssetRoutes.WATER_ASSET);
+    URL waterImageUrl = Icon.WATER.getUrl(getClass());
     waterButton.setOnAction(e -> {
               drawingCanvas.setCursor(
                       new ImageCursor(
@@ -197,7 +181,7 @@ public class IconPlacementController extends AbstractController implements DataR
             }
     );
 
-    URL villageImageUrl = getClass().getResource(AssetRoutes.VILLAGE_ASSET);
+    URL villageImageUrl = Icon.VILLAGE.getUrl(getClass());
     villageButton.setOnAction(e -> {
               drawingCanvas.setCursor(
                       new ImageCursor(
@@ -256,7 +240,7 @@ public class IconPlacementController extends AbstractController implements DataR
 
       // Record this placement so it can be undone later.
       iconHistory.add(coordinate);
-      updateCanvas();
+      portrayCellModelCollection();
     });
   }
 
@@ -265,11 +249,11 @@ public class IconPlacementController extends AbstractController implements DataR
     if (data instanceof SketchModel receivedSketchModel) {
       regionPartitioningService.initializeService(receivedSketchModel);
       this.sketchModel = receivedSketchModel;
-      portrayModel();
+      portraySketchModel();
     }
   }
 
-  private void portrayModel() {
+  private void portraySketchModel() {
     if (drawingCanvas == null || sketchModel == null) {
       return;
     }

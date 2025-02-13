@@ -23,7 +23,7 @@
                 <Button fx:id="villageButton" minWidth="80" minHeight="80" style="-fx-background-color: #f0f0f0;">
                     <graphic>
                         <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
-                            <Image url="@../assets/village.png" />
+                            <Image url="@../assets/village_asset.png" />
                         </ImageView>
                     </graphic>
                 </Button>
@@ -31,7 +31,7 @@
                 <Button fx:id="mountainButton" minWidth="80" minHeight="80" style="-fx-background-color: #f0f0f0;">
                     <graphic>
                         <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
-                            <Image url="@../assets/mountain.png" />
+                            <Image url="@../assets/mountain_asset.png" />
                         </ImageView>
                     </graphic>
                 </Button>
@@ -41,7 +41,7 @@
                 <Button fx:id="treeButton" minWidth="80" minHeight="80" style="-fx-background-color: #f0f0f0;">
                     <graphic>
                         <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
-                            <Image url="@../assets/trees.png" />
+                            <Image url="@../assets/tree_asset.png" />
                         </ImageView>
                     </graphic>
                 </Button>
@@ -49,7 +49,7 @@
                 <Button fx:id="waterButton" minWidth="80" minHeight="80" style="-fx-background-color: #f0f0f0;">
                     <graphic>
                         <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
-                            <Image url="@../assets/waves.png" />
+                            <Image url="@../assets/water_asset.png" />
                         </ImageView>
                     </graphic>
                 </Button>

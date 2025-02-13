@@ -29,7 +29,7 @@ public class ForestMapCellGenerator implements MapCellGenerationStrategy {
   @Override
   public void generateMap(CellModel cellModel, GeneratedMapModel generatedMapModel) {
     try {
-      URL wfcInitPictureUrl = getClass().getResource(AssetRoutes.PIXE_TREE_ASSET);
+      URL wfcInitPictureUrl = getClass().getResource(AssetRoutes.FOREST_MAP_CELL_ASSET);
       BufferedImage inputImage = ImageIO.read(wfcInitPictureUrl);
 
       Polygon cellPolygon = cellModel.getPolygon();

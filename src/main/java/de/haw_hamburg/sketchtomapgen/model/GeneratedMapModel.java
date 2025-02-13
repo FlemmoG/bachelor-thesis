@@ -135,7 +135,7 @@ public class GeneratedMapModel {
 
   private Font loadFantasyFont(int fontSize) {
     try {
-      URL fontUrl = getClass().getResource(AssetRoutes.FANTASY_FONT);
+      URL fontUrl = getClass().getResource(AssetRoutes.FONT_ASSET);
       File file = new File(fontUrl.toURI());
       return Font.createFont(Font.TRUETYPE_FONT, file).deriveFont(Font.PLAIN, fontSize);
     } catch (FontFormatException | IOException | URISyntaxException e ) {

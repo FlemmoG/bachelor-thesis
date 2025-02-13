@@ -16,7 +16,7 @@ import javafx.scene.paint.Color;
 import java.io.IOException;
 
 
-public class DrawController extends AbstractController{
+public class DrawController extends AbstractController {
 
   private final double ERASER_RADIUS = 50;
   private final double PEN_RADIUS = 1;
@@ -44,8 +44,10 @@ public class DrawController extends AbstractController{
     addMouseEventHandlers();
     addKeyboardEventHandlers();
   }
+
+  // Teilt dem navigation Controller mit, dass zur nächsten View gewechselt werden soll
   @FXML
-  private void openIconPlacementView(){
+  private void openIconPlacementView() {
     try {
       navigationController.switchView(ViewRoutes.ICON_PLACEMENT_VIEW, sketchService.getSketchModel());
     } catch (IOException e) {
@@ -53,10 +55,8 @@ public class DrawController extends AbstractController{
     }
   }
 
-  private void generateMap() {
-
-    System.out.println("Generating map from the sketch...");
-
+  // Generiert einen Umriss (oder mehrere) aus der Skizze und zeichnet ihn
+  private void generateOutline() {
     GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
     gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
 
@@ -67,11 +67,12 @@ public class DrawController extends AbstractController{
     openIconPlacementView();
   }
 
+  // Event Handler für die Benutzerinteraktion
   private void addMouseEventHandlers() {
 
     drawButton.setOnAction(e -> isDrawing = true);
     eraseButton.setOnAction(e -> isDrawing = false);
-    generateButton.setOnAction(e -> generateMap());
+    generateButton.setOnAction(e -> generateOutline());
 
     GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
 
@@ -113,15 +114,14 @@ public class DrawController extends AbstractController{
     drawingCanvas.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> drawingCanvas.setCursor(Cursor.DEFAULT));
   }
 
-
-  private void addKeyboardEventHandlers(){
+  private void addKeyboardEventHandlers() {
     drawingCanvas.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
       if (event.getCode() == KeyCode.D) {
         isDrawing = true;
       } else if (event.getCode() == KeyCode.E) {
         isDrawing = false;
       } else if (event.getCode() == KeyCode.ENTER) {
-        generateMap();
+        generateOutline();
       }
     });
   }

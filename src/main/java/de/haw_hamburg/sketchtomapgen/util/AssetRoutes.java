@@ -1,17 +1,19 @@
 package de.haw_hamburg.sketchtomapgen.util;
 
 public class AssetRoutes {
-  public static final String MOUNTAINS_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/berg.png";
-  public static final String TREES_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/treenewnew.png";
-  public static final String VILLAGE_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/villagenew.png";
-  public static final String WATER_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/waves.png";
-  public static final String TILE_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/wfctest.png";
-  public static final String PIXE_TREE_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/rastered2.png";
-  public static final String VILLAGE_TILE_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/villagetile.png";
-  public static final String PARCHMENT_TEXTURE = "/de/haw_hamburg/sketchtomapgen/assets/parchment2.png";
-  public static final String FANTASY_FONT = "/de/haw_hamburg/sketchtomapgen/fonts/UncialAntiqua-Regular.ttf";
+
+  // Interface Assets (Buttons)
+  public static final String MOUNTAINS_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/mountain_asset.png";
+  public static final String TREES_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/tree_asset.png";
+  public static final String VILLAGE_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/village_asset.png";
+  public static final String WATER_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/water_asset.png";
 
 
+  // PCG Assets
+  public static final String MOUNTAIN_MAP_CELL_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/mountain_map_cell_asset.png";
+  public static final String FOREST_MAP_CELL_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/forest_map_cell_asset.png";
+  public static final String PARCHMENT_OVERLAY_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/parchment_overlay_asset.png";
+  public static final String FONT_ASSET = "/de/haw_hamburg/sketchtomapgen/fonts/UncialAntiqua-Regular.ttf";
 
   private AssetRoutes() {
     throw new UnsupportedOperationException("Utility class");
