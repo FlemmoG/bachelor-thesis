@@ -3,9 +3,7 @@ package de.haw_hamburg.sketchtomapgen.service.strategy.cell;
 import com.auburn.fastnoiselite.FastNoiseLite;
 import de.haw_hamburg.sketchtomapgen.model.GeneratedMapModel;
 import de.haw_hamburg.sketchtomapgen.model.CellModel;
-import de.haw_hamburg.sketchtomapgen.service.strategy.cell.MapCellGenerationStrategy;
 import de.haw_hamburg.sketchtomapgen.util.AssetRoutes;
-import de.haw_hamburg.sketchtomapgen.util.GlobalColors;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
@@ -25,17 +23,16 @@ import java.util.List;
 import java.util.Random;
 
 public class MountainMapCellGenerator implements MapCellGenerationStrategy {
+  final double MOUNTAIN_SIZE_FACTOR = 2;   // Multipliziert die Größe der Berge
+  final double NOISE_THRESHOLD = 0.2;      // Ab diesem Noise-Wert werden Berge gezeichnet
+  final int STEP_SIZE = 20;                // Schrittweite für die Iteration (größere Werte = weniger Berge)
+  final int MIN_DISTANCE_BETWEEN_ASSETS = 30; // Minimaler Abstand zwischen zwei Bergen
+  final int MIN_MOUNTAIN_SIZE = 30; // Minimale Größe der Berge (verhindert zu kleine Berge, die unnatürlich wirken)
+  final int MIN_DISTANCE_FROM_BOUNDARY = 30;  // Minimaler Abstand zu den Zellgrenzen
+  private final GeometryFactory geometryFactory = new GeometryFactory();
 
   @Override
   public void generateMap(CellModel cellModel, GeneratedMapModel generatedMapModel) {
-    // Skalierungsvariablen
-    final double mountainSizeFactor = 2;   // Multipliziert die Größe der Berge
-    final double noiseThreshold = 0.2;      // Ab diesem Noise-Wert werden Berge gezeichnet
-    final int stepSize = 20;                // Schrittweite für die Iteration (größere Werte = weniger Berge)
-    final int minDistanceBetweenAssets = 30; // Minimaler Abstand zwischen zwei Bergen
-    final int minMountainSize = 30; // Minimale Größe der Berge (verhindert zu kleine Berge, die unnatürlich wirken)
-    final int minDistanceFromBoundary = 30;  // Minimaler Abstand zu den Zellgrenzen
-
     // Noise-Generator initialisieren
     FastNoiseLite fastNoiseLite = new FastNoiseLite(new Random().nextInt());
     fastNoiseLite.SetNoiseType(FastNoiseLite.NoiseType.Perlin);
@@ -55,42 +52,37 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
     // Liste zur Nachverfolgung der gezeichneten Asset-Positionen
     List<Coordinate> drawnAssets = new ArrayList<>();
     Random stepRandomizer = new Random();
-    // Schleife über alle Punkte im Envelope mit festem Schritt (stepSize)
-    for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x += stepSize + stepRandomizer.nextInt(10)) {
-      for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y += stepSize + stepRandomizer.nextInt(10)) {
+    // Schleife über alle Punkte im Envelope mit festem Schritt
+    for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x += STEP_SIZE + stepRandomizer.nextInt(10)) {
+      for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y += STEP_SIZE + stepRandomizer.nextInt(10)) {
         Coordinate point = new Coordinate(x, y);
 
         // Prüfen, ob der Punkt zu nahe an einem anderen Asset liegt
         boolean isTooClose = drawnAssets.stream()
-                .anyMatch(existing -> point.distance(existing) < minDistanceBetweenAssets);
+                .anyMatch(existing -> point.distance(existing) < MIN_DISTANCE_BETWEEN_ASSETS);
 
         if (isTooClose){
           continue;
         }
 
-        // Noise-Wert für die aktuelle Position berechnen
+        // Noise-Wert für die aktuelle Position berechnen und normalisieren
         float noiseValue = fastNoiseLite.GetNoise(x, y);
-
-        // Noise-Wert in den Bereich [0, 1] normalisieren
         float normalizedValue = (noiseValue + 1.0f) / 2.0f;
 
         // Nur zeichnen, wenn der Noise-Wert hoch genug ist
-        if (normalizedValue > noiseThreshold) {
+        if (normalizedValue > NOISE_THRESHOLD) {
 
           if (preparedCellPolygon.covers(new GeometryFactory().createPoint(point))) {
-            if (distanceToBoundary(point, polygon) < minDistanceFromBoundary) {
+            if (distanceToBoundary(point, polygon) < MIN_DISTANCE_FROM_BOUNDARY) {
               continue;
             }
-            int mountainSize = (int) (5 + Math.pow(normalizedValue, 3) * 100 * mountainSizeFactor);
+            int mountainSize = (int) (5 + Math.pow(normalizedValue, 3) * 100 * MOUNTAIN_SIZE_FACTOR);
             System.out.println(mountainSize);
-            if (mountainSize >= minMountainSize) {
-              // Randomly flip the image
+            if (mountainSize >= MIN_MOUNTAIN_SIZE) {
+              // Random Bild flips
               Image finalMountainImage = random.nextBoolean() ? flipImageHorizontally(mountainImage) : mountainImage;
-
-              // Berg zeichnen
               generatedMapModel.addAsset((int) point.getX(), (int) point.getY(), finalMountainImage, mountainSize);
-
-              // Gezeichnete Position speichern
+              // Gezeichnete Position merken
               drawnAssets.add(point);
             }
           }
@@ -120,7 +112,7 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
 
   private double distanceToBoundary(Coordinate coordinate, Polygon polygon){
     return DistanceOp.distance(
-            new GeometryFactory().createPoint(coordinate),
+            geometryFactory.createPoint(coordinate),
             polygon.getBoundary()
     );
   }

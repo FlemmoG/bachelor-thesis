@@ -40,6 +40,7 @@ public class SketchService {
     return image;
   }
 
+  // Bresenham nutzen, um interpolierte Linien zu zeichnen
   public void addPixelsUsingInterpolation(int lastXRounded, int lastYRounded, int currentX, int currentY) {
     int dx = Math.abs(currentX - lastXRounded);
     int dy = Math.abs(currentY - lastYRounded);
@@ -66,6 +67,7 @@ public class SketchService {
     }
   }
 
+  // Alle Pixel aus dem Model entfernen, die in einem bestimmten Radius liegen
   public void removePixels(int x, int y, int radius) {
     int halfRadius = radius / 2;
     for (int i = x - halfRadius; i <= x + halfRadius; i++) {
@@ -79,13 +81,12 @@ public class SketchService {
     return sketchModel;
   }
 
+  // Umrisse für alle Cluster zeichnen
   public void cleanSketchModel() {
-    GeometryCollection clusters = sketchModel.getConcaveHullsForClusters();
-
-    // init new sketch model (aggregates all concave hulls for all clusters)
+    GeometryCollection clusters = sketchModel.getOutlinesForClusters();
     sketchModel = new SketchModel();
 
-    // get concave hull boundaries for each cluster
+    // Umriss Form für alle Cluster approximieren
     for (int i = 0; i < clusters.getNumGeometries(); i++) {
       Geometry clusterGeometry = clusters.getGeometryN(i);
 
@@ -93,12 +94,12 @@ public class SketchService {
         List<LineSegment> lineSegments = new ArrayList<>();
         Coordinate[] coordinates = clusterGeometry.getBoundary().getCoordinates();
 
-        // get line segments from coordinates
+        // Linien Segmente extrahieren
         for (int j = 0; j < coordinates.length - 1; j++) {
           lineSegments.add(new LineSegment(coordinates[j], coordinates[j + 1]));
         }
 
-        // round coordinates to add to new sketch model with interpolation
+        // Koordinaten runden, dann dem neuen SketchModel hinzufügen mithilfe der interpolierungs Methode
         for (LineSegment lineSegment : lineSegments) {
           int x1 = (int) Math.round(lineSegment.p0.x);
           int y1 = (int) Math.round(lineSegment.p0.y);

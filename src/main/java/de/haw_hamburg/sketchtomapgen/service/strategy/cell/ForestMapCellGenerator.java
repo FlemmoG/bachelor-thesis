@@ -21,11 +21,12 @@ import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 import org.locationtech.jts.operation.distance.DistanceOp;
 
 public class ForestMapCellGenerator implements MapCellGenerationStrategy {
-  private static final double MAX_BLEND_DISTANCE = 30.0;
-  private static final double NOISE_STRENGTH = 0.3;
-  private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
-  private static final int WFC_TILE_SIZE = 128;
+  private static final double MAX_BLEND_DISTANCE = 30.0; // Abstand zum Rand
+  private static final double NOISE_STRENGTH = 0.3; // Bestimmt die Stärke des Weichzeichnens
+  private static final int WFC_TILE_SIZE = 128; // Größe des WFC Outputs
+  private final GeometryFactory geometryFactory = new GeometryFactory();
 
+  // generiert die Kartenabschnitte für Waldregionen
   @Override
   public void generateMap(CellModel cellModel, GeneratedMapModel generatedMapModel) {
     try {
@@ -46,6 +47,7 @@ public class ForestMapCellGenerator implements MapCellGenerationStrategy {
       Geometry cellBoundary = cellPolygon.getBoundary();
       PreparedGeometry preparedCellPolygon = PreparedGeometryFactory.prepare(cellPolygon);
 
+      // WFC Model initialisieren
       OverlappingModel model = new OverlappingModel(
               inputImage,
               3,
@@ -74,12 +76,12 @@ public class ForestMapCellGenerator implements MapCellGenerationStrategy {
       for (int x = minX; x <= maxX; x++) {
         for (int y = minY; y <= maxY; y++) {
           Coordinate coord = new Coordinate(x, y);
-          if (preparedCellPolygon.covers(GEOMETRY_FACTORY.createPoint(coord))) {
+          if (preparedCellPolygon.covers(geometryFactory.createPoint(coord))) {
             int imgX = x - minX;
             int imgY = y - minY;
 
             double distance = DistanceOp.distance(
-                    GEOMETRY_FACTORY.createPoint(coord),
+                    geometryFactory.createPoint(coord),
                     cellBoundary
             );
 
@@ -103,6 +105,7 @@ public class ForestMapCellGenerator implements MapCellGenerationStrategy {
     }
   }
 
+  // Rand weichzeichnen
   private Color applyEdgeEffects(Color baseColor, double distance) {
     if (distance < MAX_BLEND_DISTANCE) {
       double blendFactor = distance / MAX_BLEND_DISTANCE;
@@ -117,6 +120,6 @@ public class ForestMapCellGenerator implements MapCellGenerationStrategy {
     double noise = random.nextDouble() * NOISE_STRENGTH;
     double finalFactor = Math.min(1, Math.max(0, easedFactor + noise - NOISE_STRENGTH / 2));
 
-    return source.interpolate(GlobalColors.TOTALLY_FLAT, 1 - finalFactor);
+    return source.interpolate(GlobalColors.GROUND_COLOR, 1 - finalFactor);
   }
 }

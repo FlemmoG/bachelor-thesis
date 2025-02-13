@@ -33,10 +33,11 @@ public class MapGenerationService {
   private final int width;
   private final int height;
 
-  public MapGenerationService(int width, int height){
+  public MapGenerationService(int width, int height) {
     this.width = width;
     this.height = height;
 
+    // Map von Icon auf Strategie Implementierung (bei Erweiterung hier hinzufügen)
     strategyMap = new HashMap<>();
     strategyMap.put(Icon.MOUNTAIN, new MountainMapCellGenerator());
     strategyMap.put(Icon.TREE, new ForestMapCellGenerator());
@@ -45,15 +46,17 @@ public class MapGenerationService {
     strategyMap.put(Icon.OCEAN, new OceanMapCellGenerator());
   }
 
+  // Neues GeneratedMapModel erstellen
   public void resetService() {
     generatedMapModel = new GeneratedMapModel(width, height);
   }
 
-  public void initializeService(CellModelCollection voronoiCellModels){
+  public void initializeService(CellModelCollection voronoiCellModels) {
     this.voronoiCellModels = voronoiCellModels;
   }
 
-  public void generateMap(){
+  // Generiert alle Teile der Map zusammen
+  public void generateMap() {
     if (voronoiCellModels == null) {
       throw new IllegalStateException("Service not initialized");
     }
@@ -70,7 +73,8 @@ public class MapGenerationService {
     addLabelsToMap();
   }
 
-  public void generateMap(Icon icon){
+  // Generiert nur die Teile der Map, die mit dme Icon matchen
+  public void generateMap(Icon icon) {
     if (voronoiCellModels == null) {
       throw new IllegalStateException("Service not initialized");
     }
@@ -90,6 +94,7 @@ public class MapGenerationService {
     }
   }
 
+  // Fügt Details hinzu (Flüsse und Label)
   public void addDetails() {
     if (voronoiCellModels == null) {
       throw new IllegalStateException("Service not initialized");
@@ -101,6 +106,7 @@ public class MapGenerationService {
     addLabelsToMap();
   }
 
+  // Fügt Filter hinzu
   public void addFiltersToImage() {
     WritableImage noisyImage = addNoise(generatedMapModel.getWritableImage(), 0.1);
 
@@ -143,7 +149,8 @@ public class MapGenerationService {
     generatedMapModel.setWritableImage(finalImage);
   }
 
-  public void drawLandBase(){
+  // Zeichnet Boden über die gesamten Polygon Flächen (außer Ozean)
+  public void drawLandBase() {
     if (voronoiCellModels == null) {
       throw new IllegalStateException("Service not initialized");
     }
@@ -160,7 +167,7 @@ public class MapGenerationService {
           if (x >= 0 && x < width && y >= 0 && y < height) {
             Coordinate point = new Coordinate(x, y);
             if (preparedCellPolygon.covers(new GeometryFactory().createPoint(point))) {
-              generatedMapModel.addPixel(x, y, GlobalColors.TOTALLY_FLAT);
+              generatedMapModel.addPixel(x, y, GlobalColors.GROUND_COLOR);
             }
           }
         }
@@ -175,10 +182,12 @@ public class MapGenerationService {
     }
   }
 
+  // Erstellt Flusstrukturen mit L-System
   private void addRiversToMap() {
     List<Polygon> polygons = voronoiCellModels.getPolygonsExcludingOcean();
     if (polygons.isEmpty()) return;
 
+    // Alle Polygone zusammenfassen
     GeometryFactory factory = new GeometryFactory();
     Geometry combinedGeometry = factory.createMultiPolygon(
                     polygons.toArray(new Polygon[0]))
@@ -186,6 +195,7 @@ public class MapGenerationService {
 
     Random random = new Random();
 
+    // Regelsatz erstellen
     Map<Character, List<WeightedRule>> stochasticRules = new HashMap<>();
     stochasticRules.put('I', Arrays.asList(
             new WeightedRule("+FF-FF-RX", 1),
@@ -240,6 +250,7 @@ public class MapGenerationService {
     }
   }
 
+  // Gibt einen zufälligen Punkt auf der Outline zurück
   private Coordinate getRandomEdgePoint(Geometry geometry, Random random) {
     Geometry boundary = geometry.getBoundary();
     if (boundary instanceof LineString) {
@@ -250,9 +261,10 @@ public class MapGenerationService {
     return geometry.getCentroid().getCoordinate();
   }
 
+  // Noise auf Bild anwenden
   private WritableImage addNoise(WritableImage image, double intensity) {
     PixelReader reader = image.getPixelReader();
-    WritableImage noisyImage = new WritableImage(reader, (int)image.getWidth(), (int)image.getHeight());
+    WritableImage noisyImage = new WritableImage(reader, (int) image.getWidth(), (int) image.getHeight());
     PixelWriter writer = noisyImage.getPixelWriter();
 
     Random rand = new Random();
@@ -275,7 +287,7 @@ public class MapGenerationService {
     return Math.max(0, Math.min(1, value));
   }
 
-  public WritableImage getImage(){
+  public WritableImage getImage() {
     return generatedMapModel.getWritableImage();
   }
 

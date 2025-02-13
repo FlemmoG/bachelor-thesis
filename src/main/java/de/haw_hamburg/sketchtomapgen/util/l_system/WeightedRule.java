@@ -1,5 +1,6 @@
 package de.haw_hamburg.sketchtomapgen.util.l_system;
 
+// Verlinkt Produktionen mit Gewichten
 public class WeightedRule {
   String production;
   double weight;

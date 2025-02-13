@@ -24,28 +24,14 @@ public class VillageMapCellGenerator implements MapCellGenerationStrategy {
           "dorf", "furt", "heim", "stedt", "tal", "berg", "au", "winkel", "hafen"
   };
 
-  // Zufallszahlengenerator
   private static final Random RANDOM = new Random();
-  private List<Point> nodes = new ArrayList<>();
-  Set<Point> setLabels = new HashSet<>();
+  private final List<Point> nodes = new ArrayList<>();
+  private final Set<Point> setLabels = new HashSet<>();
+  private static final GeometryFactory geometryFactory = new GeometryFactory();
 
   @Override
   public void generateMap(CellModel cellModel, GeneratedMapModel generatedMapModel) {
-    System.out.println("anfang");
     Polygon polygon = cellModel.getPolygon();
-    Envelope envelope = polygon.getEnvelopeInternal();
-    GeometryFactory gf = new GeometryFactory();
-    PreparedGeometry preparedCellPolygon = PreparedGeometryFactory.prepare(polygon);
-
-    // Grundfarbe
-    for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x++) {
-      for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y++) {
-        Coordinate point = new Coordinate(x, y);
-        if (preparedCellPolygon.covers(gf.createPoint(point))) {
-          generatedMapModel.addPixel(x, y, GlobalColors.TOTALLY_FLAT);
-        }
-      }
-    }
 
     // Straßennetzwerk relativ zur Polygongröße zeichnen
     int numSeeds = (int) (polygon.getArea() / 10000);
@@ -78,12 +64,12 @@ public class VillageMapCellGenerator implements MapCellGenerationStrategy {
       int x = (int) Math.round(node.getX());
       int y = (int) Math.round(node.getY()) - 10;
 
-      drawMarker(x, y, markerSize, generatedMapModel, GlobalColors.MARKER);
+      drawMarker(x, y, markerSize, generatedMapModel, GlobalColors.MARKER_COLOR);
 
       boolean canPlaceLabel = setLabels.stream().noneMatch(p -> p.distance(node) < labelRadius);
 
       if (canPlaceLabel) {
-        generatedMapModel.addLabel(x, y, getRandomVillageName(), GlobalColors.MARKER, 10);
+        generatedMapModel.addLabel(x, y, getRandomVillageName(), GlobalColors.MARKER_COLOR);
         setLabels.add(node);
       }
     }
@@ -92,13 +78,12 @@ public class VillageMapCellGenerator implements MapCellGenerationStrategy {
   }
 
   private static RoadNetworkData generateRoadNetwork(Polygon polygon, int numSeeds) {
-    GeometryFactory gf = new GeometryFactory();
-    List<Point> seedPoints = generateSeedPoints(polygon, numSeeds, gf);
-    List<LineString> roads = computeMST(seedPoints, gf);
+    List<Point> seedPoints = generateSeedPoints(polygon, numSeeds);
+    List<LineString> roads = computeMST(seedPoints);
     return new RoadNetworkData(roads, seedPoints);
   }
 
-  private static List<Point> generateSeedPoints(Polygon polygon, int numSeeds, GeometryFactory gf) {
+  private static List<Point> generateSeedPoints(Polygon polygon, int numSeeds) {
     List<Point> seedPoints = new ArrayList<>();
     Envelope envelope = polygon.getEnvelopeInternal();
     Random random = new Random();
@@ -109,7 +94,7 @@ public class VillageMapCellGenerator implements MapCellGenerationStrategy {
     while (seedPoints.size() < numSeeds) {
       double x = envelope.getMinX() + random.nextDouble() * envelope.getWidth();
       double y = envelope.getMinY() + random.nextDouble() * envelope.getHeight();
-      Point p = gf.createPoint(new Coordinate(x, y));
+      Point p = geometryFactory.createPoint(new Coordinate(x, y));
       if (preparedCellPolygon.covers(p)) {
         seedPoints.add(p);
       }
@@ -117,7 +102,7 @@ public class VillageMapCellGenerator implements MapCellGenerationStrategy {
     return seedPoints;
   }
 
-  private static List<LineString> computeMST(List<Point> points, GeometryFactory gf) {
+  private static List<LineString> computeMST(List<Point> points) {
     int n = points.size();
 
     // Wenn keine Punkte in der Liste enthalten sind
@@ -166,12 +151,13 @@ public class VillageMapCellGenerator implements MapCellGenerationStrategy {
                 points.get(i).getCoordinate(),
                 points.get(parent[i]).getCoordinate()
         };
-        roadSegments.add(gf.createLineString(coords));
+        roadSegments.add(geometryFactory.createLineString(coords));
       }
     }
     return roadSegments;
   }
 
+  // Modifizierter Bresenham
   private void drawLine(LineString line, GeneratedMapModel generatedMapModel, int roadRadius) {
     Coordinate[] coords = line.getCoordinates();
     if (coords.length < 2) {
@@ -195,10 +181,10 @@ public class VillageMapCellGenerator implements MapCellGenerationStrategy {
         for (int offsetY = -roadRadius; offsetY <= roadRadius; offsetY++) {
           double distance = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
           if (distance <= roadRadius - 0.5) {
-            generatedMapModel.addPixel(x0 + offsetX, y0 + offsetY, GlobalColors.ROAD);
+            generatedMapModel.addPixel(x0 + offsetX, y0 + offsetY, GlobalColors.ROAD_COLOR);
           } else if (distance <= roadRadius) {
             if (random.nextDouble() > 0.3) {
-              generatedMapModel.addPixel(x0 + offsetX, y0 + offsetY, GlobalColors.ROAD);
+              generatedMapModel.addPixel(x0 + offsetX, y0 + offsetY, GlobalColors.ROAD_COLOR);
             }
           }
         }

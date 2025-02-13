@@ -18,6 +18,8 @@ import java.net.URL;
 public class GeneratedMapModel {
   private final int width;
   private final int height;
+
+  // Kerndatenstruktur die Pixel direkt speichert
   private WritableImage writableImage;
   private Font font;
 
@@ -28,6 +30,7 @@ public class GeneratedMapModel {
     this.font = loadFantasyFont(15);
   }
 
+  // Fügt Pixel zum finalen Bild hinzu, wobei out of bounds pixel ignoriert werden
   public void addPixel(int x, int y, Color color) {
     if (x >= 0 && x < width && y >= 0 && y < height) {
       PixelWriter pixelWriter = writableImage.getPixelWriter();
@@ -35,6 +38,7 @@ public class GeneratedMapModel {
     } //else -> ignore
   }
 
+  // Gibt die Farbe für eine Position zurück
   public Color getColorAt(int x, int y) {
     if (x >= 0 && x < width && y >= 0 && y < height) {
       return writableImage.getPixelReader().getColor(x, y);
@@ -47,10 +51,6 @@ public class GeneratedMapModel {
     return writableImage;
   }
 
-  public boolean isWithinBounds(int x, int y) {
-    return x >= 0 && x < width && y >= 0 && y < height;
-  }
-
   public int getHeight() {
     return height;
   }
@@ -59,6 +59,7 @@ public class GeneratedMapModel {
     return width;
   }
 
+  // Fügt ein beliebiges Asset an einer übergebenen Position hinzu
   public void addAsset(int centerX, int centerY, Image asset, int size) {
     PixelWriter pixelWriter = writableImage.getPixelWriter();
 
@@ -79,8 +80,8 @@ public class GeneratedMapModel {
         int sourceY = (int) (y * scaleY);
 
         // Ensure we don't exceed the source image boundaries
-        sourceX = Math.min(sourceX, (int)asset.getWidth() - 1);
-        sourceY = Math.min(sourceY, (int)asset.getHeight() - 1);
+        sourceX = Math.min(sourceX, (int) asset.getWidth() - 1);
+        sourceY = Math.min(sourceY, (int) asset.getHeight() - 1);
 
         Color color = assetReader.getColor(sourceX, sourceY);
         scaledWriter.setColor(x, y, color);
@@ -105,7 +106,8 @@ public class GeneratedMapModel {
     }
   }
 
-  public void addLabel(int x, int y, String text, Color fxColor, int fontSize) {
+  // Fügt Text an übergebener Position hinzu
+  public void addLabel(int x, int y, String text, Color fxColor) {
     BufferedImage bufferedImage = SwingFXUtils.fromFXImage(this.writableImage, null);
 
     Graphics2D g2d = bufferedImage.createGraphics();
@@ -115,12 +117,7 @@ public class GeneratedMapModel {
 
     g2d.setFont(font);
 
-    java.awt.Color awtColor = new java.awt.Color(
-            (float) fxColor.getRed(),
-            (float) fxColor.getGreen(),
-            (float) fxColor.getBlue(),
-            (float) fxColor.getOpacity()
-    );
+    java.awt.Color awtColor = new java.awt.Color((float) fxColor.getRed(), (float) fxColor.getGreen(), (float) fxColor.getBlue(), (float) fxColor.getOpacity());
     g2d.setColor(awtColor);
     g2d.drawString(text, x, y);
 
@@ -129,16 +126,18 @@ public class GeneratedMapModel {
     this.writableImage = SwingFXUtils.toFXImage(bufferedImage, this.writableImage);
   }
 
+  // Überschreibt die aktuellen Pixel mit den Pixeln des übergebenen Bildes
   public void setWritableImage(WritableImage finalImage) {
     this.writableImage = finalImage;
   }
 
+  // Lädt Font
   private Font loadFantasyFont(int fontSize) {
     try {
       URL fontUrl = getClass().getResource(AssetRoutes.FONT_ASSET);
       File file = new File(fontUrl.toURI());
       return Font.createFont(Font.TRUETYPE_FONT, file).deriveFont(Font.PLAIN, fontSize);
-    } catch (FontFormatException | IOException | URISyntaxException e ) {
+    } catch (FontFormatException | IOException | URISyntaxException e) {
       e.printStackTrace();
       return new Font("Serif", Font.PLAIN, fontSize);
     }

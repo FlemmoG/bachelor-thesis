@@ -22,8 +22,7 @@ import java.io.IOException;
 import static javafx.embed.swing.SwingFXUtils.fromFXImage;
 
 
-public class ResultController extends AbstractController implements DataReceiver{
-
+public class ResultController extends AbstractController implements DataReceiver {
   @FXML
   private Canvas resultCanvas;
   private MapGenerationService mapGenerationService;
@@ -32,15 +31,17 @@ public class ResultController extends AbstractController implements DataReceiver
     this.mapGenerationService = new MapGenerationService((int) resultCanvas.getWidth(), (int) resultCanvas.getHeight());
   }
 
+  // einzelne Regionen erneut generieren (neues Model wird instanziiert)
   @FXML
   private void handleRegenerate() {
     mapGenerationService.resetService();
     portrayResult();
   }
 
+  // gesamte Applikation wird zurückgesetzt und der Nutzer springt zur Draw View zurück
   @FXML
   private void handleRestart() {
-        System.out.println("Restarting the application...");
+    System.out.println("Restarting the application...");
     try {
       navigationController.switchView(ViewRoutes.DRAW_VIEW);
     } catch (IOException e) {
@@ -48,6 +49,7 @@ public class ResultController extends AbstractController implements DataReceiver
     }
   }
 
+  // Service fügt Filter hinzu
   @FXML
   private void addFilters() {
     GraphicsContext gc = resultCanvas.getGraphicsContext2D();
@@ -59,9 +61,9 @@ public class ResultController extends AbstractController implements DataReceiver
     gc.drawImage(processedImage, 0, 0);
   }
 
+  // Export der Datei über FileSystem
   @FXML
   private void handleExport() {
-    // Create a FileChooser for the user to select the export location
     FileChooser fileChooser = new FileChooser();
     fileChooser.setTitle("Export Canvas as Image");
     fileChooser.getExtensionFilters().addAll(
@@ -70,28 +72,22 @@ public class ResultController extends AbstractController implements DataReceiver
             new FileChooser.ExtensionFilter("BMP Image", "*.bmp")
     );
 
-    // Show the Save File dialog
     File file = fileChooser.showSaveDialog(resultCanvas.getScene().getWindow());
     if (file != null) {
       try {
-        // Create a WritableImage from the canvas
         WritableImage writableImage = new WritableImage((int) resultCanvas.getWidth(), (int) resultCanvas.getHeight());
         resultCanvas.snapshot(null, writableImage);
 
-        // Extract the file format from the file extension
         String format = file.getName().substring(file.getName().lastIndexOf(".") + 1);
 
-        // Save the image
         ImageIO.write(fromFXImage(writableImage, null), format, file);
 
-        // Confirmation dialog
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Export Successful");
         alert.setHeaderText(null);
         alert.setContentText("The canvas has been successfully exported to:\n" + file.getAbsolutePath());
         alert.showAndWait();
       } catch (Exception e) {
-        // Handle any exceptions that occur during the export
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Export Failed");
         alert.setHeaderText(null);
@@ -101,15 +97,7 @@ public class ResultController extends AbstractController implements DataReceiver
     }
   }
 
-
-  @Override
-  public void receiveData(Object data) {
-    if (data instanceof CellModelCollection voronoiCellModels) {
-      mapGenerationService.initializeService(voronoiCellModels);
-      portrayResult();
-    }
-  }
-
+  // Jedes Regionsicon nacheinander der drawStep Methode übergeben zusammen mit dem nächsten Schritt (Runnable)
   private void portrayResult() {
     drawStep(Icon.BLANK, () ->
             drawStep(Icon.OCEAN, () ->
@@ -131,7 +119,9 @@ public class ResultController extends AbstractController implements DataReceiver
     );
   }
 
-  // Pausen sind nötig, damit die Karte nach und nach aufgebaut wird
+  // Übergebenes Icon der generateMap Methode im Service übergeben, der für die jeweilige Region dann im JavaFX Thread die Berechnungen startet.
+  // So kann JavaFX die Regionsgenerierung visualisieren und die Karte wird sequentiell aufgebaut
+  // (Pausen sind nötig, damit die Karte nach und nach aufgebaut wird)
   private void drawStep(Icon icon, Runnable nextStep) {
     Platform.runLater(() -> {
       if (icon == Icon.BLANK) {
@@ -150,12 +140,19 @@ public class ResultController extends AbstractController implements DataReceiver
     });
   }
 
-
   private void clearCanvasAndDrawImage() {
     GraphicsContext gc = resultCanvas.getGraphicsContext2D();
     gc.clearRect(0, 0, resultCanvas.getWidth(), resultCanvas.getHeight());
 
     WritableImage processedImage = mapGenerationService.getImage();
     gc.drawImage(processedImage, 0, 0);
+  }
+
+  @Override
+  public void receiveData(Object data) {
+    if (data instanceof CellModelCollection voronoiCellModels) {
+      mapGenerationService.initializeService(voronoiCellModels);
+      portrayResult();
+    }
   }
 }

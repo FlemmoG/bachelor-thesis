@@ -17,6 +17,7 @@ public class StochasticLSystemGenerator {
     this.random = new Random();
   }
 
+  // Generiert für ein Axiom, einen Regelsatz (gewichtet) und Anzahl von Iterationen ein L-System String
   public String generate() {
     String current = axiom;
 
@@ -27,9 +28,7 @@ public class StochasticLSystemGenerator {
 
         if (rules.containsKey(c)) {
           List<WeightedRule> possibleRules = rules.get(c);
-          double totalWeight = possibleRules.stream()
-                  .mapToDouble(r -> r.weight)
-                  .sum();
+          double totalWeight = possibleRules.stream().mapToDouble(r -> r.weight).sum();
 
           double choice = random.nextDouble() * totalWeight;
           double currentWeight = 0;

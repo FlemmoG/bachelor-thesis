@@ -10,24 +10,27 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
+// Agiert als Router
 public class NavigationController {
 
   private Stage stage;
+
   public void setStage(Stage stage) {
     this.stage = stage;
   }
 
+  // Wechselt die View, indem es aus dem Übergebenen Pfad die neue View holt und diese in die Stage setzt
   public void switchView(String fxmlPath, Object data) throws IOException {
-    // Load view
     FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
     Parent newView = loader.load();
 
-    // Link main controller
+    // NavigationController (this) dem Controller der neuen View mitgeben
     Object controller = loader.getController();
     if (controller instanceof AbstractController) {
-      ((AbstractController) controller).setNavigationController(this); // MainController weitergeben
+      ((AbstractController) controller).setNavigationController(this);
     }
 
+    // Wenn Daten vorhanden, dann übergeben (kann hier beliebiges Objekt sein)
     if (data != null && controller instanceof DataReceiver) {
       ((DataReceiver) controller).receiveData(data);
     }
@@ -35,7 +38,7 @@ public class NavigationController {
     stage.setScene(new Scene(newView));
   }
 
-  public void switchView(String fxmlPath) throws IOException{
+  public void switchView(String fxmlPath) throws IOException {
     switchView(fxmlPath, null);
   }
 

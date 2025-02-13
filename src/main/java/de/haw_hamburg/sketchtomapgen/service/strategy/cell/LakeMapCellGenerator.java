@@ -11,29 +11,22 @@ import org.locationtech.jts.operation.distance.DistanceOp;
 
 
 public class LakeMapCellGenerator implements MapCellGenerationStrategy {
+  private final GeometryFactory geometryFactory = new GeometryFactory();
   @Override
   public void generateMap(CellModel cellModel, GeneratedMapModel generatedMapModel) {
     Polygon voronoiPoly = cellModel.getPolygon();
     Coordinate centroid = cellModel.getCentroid();
 
-    // 1. Maximalen Radius bis zur Polygonkante berechnen
     double maxRadius = calculateMaxRadius(voronoiPoly, centroid);
     System.out.println(maxRadius);
 
-    // 2. Organischen See mit variabler Form erzeugen
-    Geometry lakeGeometry = createOrganicLakeShape(
-            voronoiPoly,
-            centroid,
-            maxRadius
-    );
+    Geometry lakeGeometry = createOrganicLakeShape(voronoiPoly, centroid, maxRadius);
 
-    // 3. Pixelweise Rendering
     renderLake(generatedMapModel, voronoiPoly, lakeGeometry);
   }
 
+  // Maximalen Radius bis zur Polygonkante berechnen
   private double calculateMaxRadius(Polygon polygon, Coordinate centroid) {
-    GeometryFactory geometryFactory = new GeometryFactory();
-
     Point centroidPoint = geometryFactory.createPoint(centroid);
     LineString boundary = polygon.getExteriorRing();
 
@@ -43,9 +36,8 @@ public class LakeMapCellGenerator implements MapCellGenerationStrategy {
     return centroidPoint.distance(geometryFactory.createPoint(closestPoints[0]));
   }
 
+  // Organischen See mit variabler Form erzeugen
   private Geometry createOrganicLakeShape(Geometry boundary, Coordinate center, double baseRadius) {
-    GeometryFactory gf = new GeometryFactory();
-
     // Adjusted parameters for smoother variation
     final double minRadiusFactor = 0.7;  // Increased minimal radius factor
     final double maxRadiusFactor = 0.3;  // Reduced maximum variation
@@ -61,44 +53,38 @@ public class LakeMapCellGenerator implements MapCellGenerationStrategy {
       double radiusVariation = minRadiusFactor + maxRadiusFactor * Math.random();
       double effectiveRadius = baseRadius * radiusVariation;
 
-      circleCoords[i] = new Coordinate(
-              center.x + effectiveRadius * Math.cos(angle),
-              center.y + effectiveRadius * Math.sin(angle)
-      );
+      circleCoords[i] = new Coordinate(center.x + effectiveRadius * Math.cos(angle), center.y + effectiveRadius * Math.sin(angle));
     }
 
     circleCoords[circleSegments] = circleCoords[0];
-    Geometry rawLakeShape = gf.createPolygon(gf.createLinearRing(circleCoords), null);
+    Geometry rawLakeShape = geometryFactory.createPolygon(geometryFactory.createLinearRing(circleCoords), null);
 
     return rawLakeShape.intersection(boundary);
   }
 
-
+  // Pixelweise Rendering
   private void renderLake(GeneratedMapModel model, Geometry boundary, Geometry lake) {
     Envelope env = boundary.getEnvelopeInternal();
-    GeometryFactory gf = new GeometryFactory();
     PreparedGeometry preparedCellPolygonLake = PreparedGeometryFactory.prepare(lake);
     PreparedGeometry preparedCellPolygonBoundary = PreparedGeometryFactory.prepare(boundary);
 
 
-    for(int x = (int)env.getMinX(); x <= env.getMaxX(); x++) {
-      for(int y = (int)env.getMinY(); y <= env.getMaxY(); y++) {
+    for (int x = (int) env.getMinX(); x <= env.getMaxX(); x++) {
+      for (int y = (int) env.getMinY(); y <= env.getMaxY(); y++) {
         Coordinate c = new Coordinate(x, y);
-        Point p = gf.createPoint(c);
+        Point p = geometryFactory.createPoint(c);
 
-        if(preparedCellPolygonBoundary.covers(p)) {
-          Color color = preparedCellPolygonLake.covers(p)
-                  ? lakeColorForPosition(p, lake.getCentroid(), p.distance(lake.getBoundary()))
-                  : GlobalColors.TOTALLY_FLAT;
+        if (preparedCellPolygonBoundary.covers(p)) {
+          Color color = preparedCellPolygonLake.covers(p) ? lakeColorForPosition(p, lake.getCentroid(), p.distance(lake.getBoundary())) : GlobalColors.GROUND_COLOR;
           model.addPixel(x, y, color);
         }
       }
     }
   }
 
+  // Farbinterpolation
   private Color lakeColorForPosition(Point position, Point center, double distanceToBoundary) {
     double t = Math.min(position.distance(center) / distanceToBoundary, 1.0);
-    return GlobalColors.DEEP_WATER.interpolate(GlobalColors.WATER_SURFACE, t);
+    return GlobalColors.DEEP_OCEAN_COLOR.interpolate(GlobalColors.OCEAN_SURFACE_COLOR, t);
   }
-
 }

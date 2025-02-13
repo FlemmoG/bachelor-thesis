@@ -25,23 +25,25 @@ public class RegionPartitioningService {
   private final GeometryFactory geometryFactory;
   private final Envelope totalAreaEnvelope;
 
-  public RegionPartitioningService(int width, int height){
+  public RegionPartitioningService(int width, int height) {
     this.width = width;
     this.height = height;
     geometryFactory = new GeometryFactory();
     totalAreaEnvelope = new Envelope(0, width, 0, height);
   }
-  public void initializeService(SketchModel sketchModel){
+
+  public void initializeService(SketchModel sketchModel) {
     this.sketchModel = sketchModel;
   }
 
-  public void addIcon(Coordinate coordinate, Icon icon){
+  public void addIcon(Coordinate coordinate, Icon icon) {
     sketchModel.addIcon(coordinate, icon);
   }
 
+  // Erstellt aus N Umrissen N Voronoi Diagramme auf Basis der Icons
   public void computeVoronoiFromIcons() {
     if (concaveHullsForClusters == null) {
-      concaveHullsForClusters = sketchModel.getConcaveHullsForClusters();
+      concaveHullsForClusters = sketchModel.getOutlinesForClusters();
     }
     Map<Coordinate, Icon> icons = sketchModel.getIcons();
 
@@ -49,11 +51,12 @@ public class RegionPartitioningService {
 
     Geometry nonCoveredArea = getTotalArea();
 
+    // Über alle Cluster iterieren
     for (int i = 0; i < concaveHullsForClusters.getNumGeometries(); i++) {
       System.out.println(concaveHullsForClusters.getNumGeometries());
       Geometry concaveHull = concaveHullsForClusters.getGeometryN(i);
 
-      // Filter points within the current concave hull
+      // Nur Icons und dessen Koordinaten beachten, wenn innerhalb des aktuellen Clutsers
       List<Coordinate> pointsWithinHull = new ArrayList<>();
       for (Coordinate coord : icons.keySet()) {
         if (concaveHull.covers(geometryFactory.createPoint(coord))) {
@@ -63,7 +66,7 @@ public class RegionPartitioningService {
 
       if (pointsWithinHull.isEmpty()) continue;
 
-      // Handle cases where only one point is within the hull
+      // Kein Voronoi nötig, wenn Umriss nur ein Icon enthält
       if (pointsWithinHull.size() == 1) {
         Coordinate singlePoint = pointsWithinHull.get(0);
         Icon icon = icons.get(singlePoint);
@@ -75,7 +78,7 @@ public class RegionPartitioningService {
         continue;
       }
 
-
+      // Voronoi aus den Icons im Cluster bauen
       VoronoiDiagramBuilder voronoiDiagramBuilder = new VoronoiDiagramBuilder();
       voronoiDiagramBuilder.setSites(pointsWithinHull);
       voronoiDiagramBuilder.setClipEnvelope(totalAreaEnvelope);
@@ -83,20 +86,22 @@ public class RegionPartitioningService {
 
       for (int j = 0; j < voronoiDiagram.getNumGeometries(); j++) {
         Geometry cell = voronoiDiagram.getGeometryN(j);
-        //Geometry clippedCell = cell.intersection(concaveHull);
 
         if (!cell.isEmpty() && cell instanceof Polygon polygon) {
-          // Get the centroid and find nearest icon
+          // Icon zu Centroiden zuordnen
           Coordinate centroid = polygon.getCentroid().getCoordinate();
           Coordinate nearestIconCoord = findNearestIconCoordinate(centroid, icons);
           Icon icon = icons.get(nearestIconCoord);
 
+          // Zelle auf Umriss zuschneiden (falls am Rand)
           if (icon != null) {
             Color color = getColor(icon);
             Geometry clippedCell = polygon.intersection(concaveHull);
             List<Polygon> polygons = new ArrayList<>();
             if (clippedCell instanceof Polygon clippedPolygon) {
               polygons.add(clippedPolygon);
+
+              // Möglicherweise ist die Zelle ein MultiPolygon, da aus nicht direkt angrenzenden Polygonen besteht
             } else if (clippedCell instanceof MultiPolygon clippedMultiPolygon) {
               for (int k = 0; k < clippedMultiPolygon.getNumGeometries(); k++) {
                 Geometry geom = clippedMultiPolygon.getGeometryN(k);
@@ -105,6 +110,7 @@ public class RegionPartitioningService {
                 }
               }
             }
+            // Über die beschnittenen Polygone iterieren und CellModels erstellen
             for (Polygon clippedPolygon : polygons) {
               CellModel cellModel = new CellModel(clippedPolygon, color, icon, nearestIconCoord);
               voronoiCellModels.add(cellModel);
@@ -113,13 +119,13 @@ public class RegionPartitioningService {
         }
       }
 
-      // Entferne den Bereich, der von den Polygonen abgedeckt wird
+      // Ocean Polygon berechnen, indem die Polygon differenz genommen wird
       for (CellModel cellModel : voronoiCellModels) {
         nonCoveredArea = nonCoveredArea.difference(cellModel.getPolygon());
       }
     }
 
-    // Nachdem alle Hüllen bearbeitet wurden, erstellen wir die "Wasser"-Zelle für den verbleibenden Bereich
+    // Nachdem alle Hüllen bearbeitet wurden wird die Ozean Zelle erstellt
     if (!nonCoveredArea.isEmpty()) {
       if (nonCoveredArea instanceof Polygon polygon) {
         Color waterColor = Color.rgb(0, 0, 255, 0.5);
@@ -131,30 +137,7 @@ public class RegionPartitioningService {
     this.voronoiCellModels = voronoiCellModels;
   }
 
-  private static Color getColor(Icon icon) {
-    return switch (icon) {
-      case MOUNTAIN -> Color.rgb(139, 69, 19, 0.5); // Braun für Berge
-      case TREE -> Color.rgb(34, 139, 34, 0.5); // Dunkelgrün für Bäume
-      case WATER -> Color.rgb(0, 191, 255, 0.5); // Hellblau für Wasser
-      case VILLAGE -> Color.rgb(184, 134, 11, 0.5); // Goldbraun für Dörfer
-      case BLANK -> Color.rgb(200, 200, 200, 0.5); // Grauton für leere Zellen
-      case OCEAN -> Color.rgb(0, 0, 139, 0.5); // Dunkelblau für Ozeane
-    };
-  }
-
-  private Geometry getTotalArea() {
-    Coordinate[] coordinates = new Coordinate[] {
-            new Coordinate(0, 0),
-            new Coordinate(width, 0),
-            new Coordinate(width, height),
-            new Coordinate(0, height),
-            new Coordinate(0, 0)
-    };
-
-    return geometryFactory.createPolygon(coordinates);
-  }
-
-
+  // Über alle CellModels und dessen Bounding Box iterieren und prüfen, ob Punkt von Polygon abgedeckt, wenn ja, dann dessen Farbe zeichnen
   public WritableImage getImage() {
     WritableImage image = new WritableImage(width, height);
     PixelWriter pixelWriter = image.getPixelWriter();
@@ -179,6 +162,28 @@ public class RegionPartitioningService {
     return image;
   }
 
+  private static Color getColor(Icon icon) {
+    return switch (icon) {
+      case MOUNTAIN -> Color.rgb(139, 69, 19, 0.5); // Braun für Berge
+      case TREE -> Color.rgb(34, 139, 34, 0.5); // Dunkelgrün für Bäume
+      case WATER -> Color.rgb(0, 191, 255, 0.5); // Hellblau für Wasser
+      case VILLAGE -> Color.rgb(184, 134, 11, 0.5); // Goldbraun für Dörfer
+      case BLANK -> Color.rgb(200, 200, 200, 0.5); // Grauton für leere Zellen
+      case OCEAN -> Color.rgb(0, 0, 139, 0.5); // Dunkelblau für Ozeane
+    };
+  }
+
+  private Geometry getTotalArea() {
+    Coordinate[] coordinates = new Coordinate[]{
+            new Coordinate(0, 0),
+            new Coordinate(width, 0),
+            new Coordinate(width, height),
+            new Coordinate(0, height),
+            new Coordinate(0, 0)
+    };
+
+    return geometryFactory.createPolygon(coordinates);
+  }
 
   private Coordinate findNearestIconCoordinate(Coordinate centroid, Map<Coordinate, Icon> icons) {
     double minDistance = Double.MAX_VALUE;

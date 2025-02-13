@@ -3,27 +3,25 @@
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 
 <?import javafx.scene.layout.VBox?>
 <BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="de.haw_hamburg.sketchtomapgen.controller.ResultController">
     <center>
         <StackPane>
-            <!-- Canvas to display the final result -->
             <Canvas fx:id="resultCanvas" width="800" height="600" style="-fx-border-color: black; -fx-background-color: white;"/>
         </StackPane>
     </center>
     <right>
         <VBox minWidth="200" prefWidth="200" maxWidth="200" spacing="20" alignment="CENTER" style="-fx-border-color: black; -fx-padding: 10;">
             <!-- Regenerate Button -->
-            <Button fx:id="regenerateButton" text="Regenerate" minWidth="100" minHeight="40" onAction="#handleRegenerate"/>
+            <Button text="Regenerate" minWidth="100" minHeight="40" onAction="#handleRegenerate"/>
             <!-- Restart Button -->
-            <Button fx:id="restartButton" text="Restart" minWidth="100" minHeight="40" onAction="#handleRestart"/>
+            <Button text="Restart" minWidth="100" minHeight="40" onAction="#handleRestart"/>
             <!-- Export Button -->
-            <Button fx:id="exportButton" text="Export" minWidth="100" minHeight="40" onAction="#handleExport"/>
+            <Button text="Export" minWidth="100" minHeight="40" onAction="#handleExport"/>
             <!-- Filters Button -->
-            <Button fx:id="filtersButton" text="Add filters" minWidth="100" minHeight="40" onAction="#addFilters"/>
+            <Button text="Add filters" minWidth="100" minHeight="40" onAction="#addFilters"/>
         </VBox>
     </right>
 </BorderPane>

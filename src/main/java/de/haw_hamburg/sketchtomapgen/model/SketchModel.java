@@ -11,7 +11,10 @@ import org.locationtech.jts.precision.GeometryPrecisionReducer;
 import java.util.*;
 
 public class SketchModel {
+  // Koodinaten, die den Umriss repräsentieren
   private Set<ClusterableCoordinate> points;
+
+  // Speichert die platzierten Icons mit Position
   private Map<Coordinate, Icon> icons;
   private GeometryFactory geometryFactory;
 
@@ -30,14 +33,14 @@ public class SketchModel {
   }
 
   public void removePixelAt(int x, int y) {
-    points.remove(new ClusterableCoordinate(x,y));
+    points.remove(new ClusterableCoordinate(x, y));
   }
 
   public Set<ClusterableCoordinate> getPoints() {
     return points;
   }
 
-  public void addIcon(Coordinate coordinate, Icon icon){
+  public void addIcon(Coordinate coordinate, Icon icon) {
     icons.put(coordinate, icon);
   }
 
@@ -45,20 +48,8 @@ public class SketchModel {
     return icons;
   }
 
-  public void getIcon(){
-
-  }
-
-/*  public Geometry getConcaveHull(){
-    MultiPoint multiPoint = geometryFactory.createMultiPointFromCoords(points.toArray(new Coordinate[0]));
-    double maxLength = calculateMaxDistanceBetweenPoints();
-
-    System.out.println(maxLength);
-
-    return ConcaveHull.concaveHullByLength(multiPoint,maxLength,false);
-  }*/
-
-  public GeometryCollection getConcaveHullsForClusters() {
+  // Berechnet die Form des gezeichneten Umrisses oder der gezeichneten Umrisse und gibt GeometryCollection zurück
+  public GeometryCollection getOutlinesForClusters() {
     double eps = 5.0; // Radius für Nachbarn
     int minPoints = 3; // Minimale Anzahl an Punkten pro Cluster
 
@@ -67,9 +58,9 @@ public class SketchModel {
 
     List<Geometry> hulls = new ArrayList<>();
 
-    // Erstelle einen Reducer mit maximaler Präzision (DOUBLE)
     GeometryPrecisionReducer precisionReducer = new GeometryPrecisionReducer(new PrecisionModel(PrecisionModel.FLOATING));
 
+    // Cluster einzelnt behandelt und From approximieren
     for (Cluster<ClusterableCoordinate> cluster : clusters) {
       List<Coordinate> clusterCoords = new ArrayList<>();
       for (ClusterableCoordinate point : cluster.getPoints()) {
@@ -78,13 +69,13 @@ public class SketchModel {
 
       if (!clusterCoords.isEmpty()) {
         // Berechne maxLength spezifisch für das aktuelle Cluster
-        double maxLength = calculateMaxDistanceBetweenPoints(clusterCoords);
+        double scaledAverageDistance = calculateScaledAverageDistance(clusterCoords);
 
         // Erstelle aus den Cluster-Koordinaten einen MultiPoint
         MultiPoint multiPoint = geometryFactory.createMultiPointFromCoords(clusterCoords.toArray(new Coordinate[0]));
 
         // Erzeuge den Concave-Hull für diesen Cluster
-        Geometry concaveHull = ConcaveHull.concaveHullByLength(multiPoint, maxLength, false);
+        Geometry concaveHull = ConcaveHull.concaveHullByLength(multiPoint, scaledAverageDistance, false);
 
         // Reduziere die Geometrie auf maximale Präzision
         concaveHull = precisionReducer.reduce(concaveHull);
@@ -96,8 +87,8 @@ public class SketchModel {
     return geometryFactory.createGeometryCollection(hulls.toArray(new Geometry[0]));
   }
 
-
-  private double calculateMaxDistanceBetweenPoints(List<Coordinate> coordinates) {
+  // Berechnet eine skalierte Durchschnittsdistanz zwischen aufeinanderfolgenden Punkten
+  private double calculateScaledAverageDistance(List<Coordinate> coordinates) {
     if (coordinates.size() < 2) {
       return 0.0;
     }
@@ -105,8 +96,6 @@ public class SketchModel {
     double totalDistance = 0.0;
     int count = 0;
 
-    // Sortierung ist hier optional – je nachdem, in welcher Reihenfolge die Punkte vorliegen.
-    // Es wird einfach der Abstand der Punkte in der Liste verwendet.
     for (int i = 1; i < coordinates.size(); i++) {
       totalDistance += coordinates.get(i - 1).distance(coordinates.get(i));
       count++;
@@ -115,7 +104,4 @@ public class SketchModel {
     double averageDistance = totalDistance / count;
     return averageDistance * 0.2;
   }
-
-
-
 }

@@ -15,6 +15,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import org.locationtech.jts.geom.Coordinate;
 
 import java.io.IOException;
@@ -45,7 +46,7 @@ public class IconPlacementController extends AbstractController implements DataR
   private final int CUSTOM_CURSOR_SIZE = 32;
   private RegionPartitioningService regionPartitioningService;
   private Icon activeIcon = Icon.BLANK;
-  private Map<Coordinate ,Icon> icons;
+  private Map<Coordinate, Icon> icons;
   private List<Coordinate> iconHistory;
   private SketchModel sketchModel;
 
@@ -56,27 +57,6 @@ public class IconPlacementController extends AbstractController implements DataR
     iconHistory = new ArrayList<>();
 
     addMouseEventHandlers();
-  }
-
-  // Updatet das Canvas und zeigt das Voronoi Diagramm auf Basis der aktuell gesetzten Icons an
-  private void portrayCellModelCollection() {
-    GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
-    gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
-
-    regionPartitioningService.computeVoronoiFromIcons();
-
-    WritableImage processedImage = regionPartitioningService.getImage();
-    gc.drawImage(processedImage, 0, 0);
-
-    for (Map.Entry<Coordinate, Icon> entry : icons.entrySet()) {
-      Coordinate coord = entry.getKey();
-      Icon icon = entry.getValue();
-      URL imageUrl = icon.getUrl(getClass());
-      if (imageUrl != null) {
-        Image image = new Image(String.valueOf(imageUrl), CUSTOM_CURSOR_SIZE, CUSTOM_CURSOR_SIZE, true, true);
-        gc.drawImage(image, coord.getX() - CUSTOM_CURSOR_SIZE / 2.0, coord.getY() - CUSTOM_CURSOR_SIZE / 2.0);
-      }
-    }
   }
 
   @FXML
@@ -92,35 +72,6 @@ public class IconPlacementController extends AbstractController implements DataR
   }
 
   @FXML
-  private void handleUndo() {
-    if (iconHistory.isEmpty()) {
-      return; // Nothing to undo
-    }
-    // Get the last placed coordinate.
-    Coordinate lastCoordinate = iconHistory.remove(iconHistory.size() - 1);
-
-    // Remove the icon from the local map.
-    icons.remove(lastCoordinate);
-
-    if (sketchModel != null) {
-      sketchModel.getIcons().remove(lastCoordinate);
-      if (iconHistory.isEmpty()) {
-        portraySketchModel();
-      } else
-        portrayCellModelCollection();
-    }
-  }
-
-  @FXML
-  private void openResultView() {
-    try {
-      navigationController.switchView(ViewRoutes.RESULT_VIEW, regionPartitioningService.getVoronoiCellModels());
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @FXML
   private void handleNo() {
     drawingCanvas.setDisable(false);
     satisfactionSection.setVisible(false);
@@ -132,8 +83,38 @@ public class IconPlacementController extends AbstractController implements DataR
     villageButton.setDisable(false);
   }
 
+  // Macht letzten Platzierungsschritt rückgängig
+  @FXML
+  private void handleUndo() {
+    if (iconHistory.isEmpty()) {
+      return;
+    }
 
+    Coordinate lastCoordinate = iconHistory.remove(iconHistory.size() - 1);
+    icons.remove(lastCoordinate);
 
+    if (sketchModel != null) {
+      sketchModel.getIcons().remove(lastCoordinate);
+      if (iconHistory.isEmpty()) {
+        var graphicsContext = drawingCanvas.getGraphicsContext2D();
+        graphicsContext.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
+        portraySketchModel();
+      } else
+        portrayCellModelCollection();
+    }
+  }
+
+  // Routet zur Result View
+  @FXML
+  private void openResultView() {
+    try {
+      navigationController.switchView(ViewRoutes.RESULT_VIEW, regionPartitioningService.getVoronoiCellModels());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  // Eventhandler sorgen geben vor allem die aktuellen Mauszeigerpositionen dem regionPartitioningService, der diese dann speichert
   private void addMouseEventHandlers() {
 
     finishPlacementButton.setOnAction(e -> {
@@ -234,11 +215,10 @@ public class IconPlacementController extends AbstractController implements DataR
           regionPartitioningService.addIcon(coordinate, Icon.MOUNTAIN);
         }
         default -> {
-          // ignore
+          // ignorieren
         }
       }
 
-      // Record this placement so it can be undone later.
       iconHistory.add(coordinate);
       portrayCellModelCollection();
     });
@@ -253,16 +233,39 @@ public class IconPlacementController extends AbstractController implements DataR
     }
   }
 
+  // Updatet das Canvas und zeigt den Umriss des SketchModels an
   private void portraySketchModel() {
     if (drawingCanvas == null || sketchModel == null) {
       return;
     }
     var graphicsContext = drawingCanvas.getGraphicsContext2D();
-    graphicsContext.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
-    graphicsContext.setFill(javafx.scene.paint.Color.BLACK);
+    graphicsContext.setFill(Color.BLACK);
 
     for (Coordinate coordinate : sketchModel.getPoints()) {
-      graphicsContext.fillOval(coordinate.getX(), coordinate.getY(), 2, 2); // Punkte zeichnen
+      graphicsContext.fillOval(coordinate.getX(), coordinate.getY(), 1.5, 1.5);
     }
   }
+
+  // Updatet das Canvas und zeigt das Voronoi Diagramm auf Basis der aktuell gesetzten Icons an
+  private void portrayCellModelCollection() {
+    GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+    gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
+
+    regionPartitioningService.computeVoronoiFromIcons();
+
+    WritableImage processedImage = regionPartitioningService.getImage();
+    gc.drawImage(processedImage, 0, 0);
+
+    for (Map.Entry<Coordinate, Icon> entry : icons.entrySet()) {
+      Coordinate coord = entry.getKey();
+      Icon icon = entry.getValue();
+      URL imageUrl = icon.getUrl(getClass());
+      if (imageUrl != null) {
+        Image image = new Image(String.valueOf(imageUrl), CUSTOM_CURSOR_SIZE, CUSTOM_CURSOR_SIZE, true, true);
+        gc.drawImage(image, coord.getX() - CUSTOM_CURSOR_SIZE / 2.0, coord.getY() - CUSTOM_CURSOR_SIZE / 2.0);
+      }
+    }
+    portraySketchModel();
+  }
+
 }

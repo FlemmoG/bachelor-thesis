@@ -62,8 +62,8 @@
             <VBox fx:id="satisfactionSection" spacing="10" alignment="CENTER" visible="false">
                 <Label text="Proceed" style="-fx-font-size: 14px;"/>
                 <HBox spacing="10" alignment="CENTER">
-                    <Button fx:id="yesButton" text="Yes" minWidth="70" minHeight="30" onAction="#openResultView"/>
-                    <Button fx:id="noButton" text="No" minWidth="70" minHeight="30" onAction="#handleNo"/>
+                    <Button text="Yes" minWidth="70" minHeight="30" onAction="#openResultView"/>
+                    <Button text="No" minWidth="70" minHeight="30" onAction="#handleNo"/>
                 </HBox>
             </VBox>
         </VBox>

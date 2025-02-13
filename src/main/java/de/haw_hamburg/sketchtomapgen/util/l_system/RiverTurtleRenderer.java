@@ -10,7 +10,6 @@ import org.locationtech.jts.geom.*;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 
-import java.util.Comparator;
 import java.util.Stack;
 
 public class RiverTurtleRenderer {
@@ -28,8 +27,7 @@ public class RiverTurtleRenderer {
   private int currentWidth = 1;
 
 
-  public RiverTurtleRenderer(GeneratedMapModel mapModel, double startX, double startY,
-                             double startAngle, double stepSize, double angleIncrement, Geometry boundary, CellModelCollection cellModels) {
+  public RiverTurtleRenderer(GeneratedMapModel mapModel, double startX, double startY, double startAngle, double stepSize, double angleIncrement, Geometry boundary, CellModelCollection cellModels) {
     this.mapModel = mapModel;
     this.x = startX;
     this.y = startY;
@@ -46,6 +44,7 @@ public class RiverTurtleRenderer {
   }
 
 
+  // Berechnet Pixel, für die gezeichnet werden soll und nimmt dabei einen erstellen L-System String entgegen
   public void render(String lSystem) {
     int maxWidth = 5;
     int minWidth = 1;
@@ -53,12 +52,12 @@ public class RiverTurtleRenderer {
 
     for (char command : lSystem.toCharArray()) {
       double distance = distanceFromSource();
-      // Abnehmende Breite: Je größer die Distanz, desto kleiner wird die Breite.
-      // Wir verwenden Math.max, um sicherzustellen, dass wir nicht unter minWidth fallen.
-      currentWidth = Math.max(minWidth, maxWidth - (int)(distance / taperingFactor));
+      // Abnehmende Breite: Je größer die Distanz, desto kleiner wird die Breite
+      // Math.max um sicherzustellen, dass der Wert nicht unter minWidth fällt
+      currentWidth = Math.max(minWidth, maxWidth - (int) (distance / taperingFactor));
 
       switch (command) {
-        case 'F':
+        case 'F': // Zeichnen
           double newX = x + stepSize * Math.cos(Math.toRadians(angle));
           double newY = y - stepSize * Math.sin(Math.toRadians(angle));
 
@@ -91,37 +90,33 @@ public class RiverTurtleRenderer {
     return Math.hypot(x - initialX, y - initialY);
   }
 
-  private double distanceToBoundary(Coordinate pixelCoord){
+  private double distanceToBoundary(Coordinate pixelCoord) {
     return geometryFactory.createPoint(pixelCoord).distance(boundaryPolygon.getBoundary());
   }
 
+  // Prüft, ob übergebene Position ein See ist
   private boolean isLake(Coordinate pixelCoord) {
     int ix = (int) pixelCoord.x;
     int iy = (int) pixelCoord.y;
     Color pixelColor = mapModel.getColorAt(ix, iy);
 
     // Interpolationsbereich.
-    Color lowerBound = GlobalColors.DEEP_WATER;
-    Color upperBound = GlobalColors.WATER_SURFACE;
+    Color lowerBound = GlobalColors.DEEP_OCEAN_COLOR;
+    Color upperBound = GlobalColors.OCEAN_SURFACE_COLOR;
 
     double tolerance = 0.01;
 
-    boolean redInRange = pixelColor.getRed() >= lowerBound.getRed() - tolerance &&
-            pixelColor.getRed() <= upperBound.getRed() + tolerance;
-    boolean greenInRange = pixelColor.getGreen() >= lowerBound.getGreen() - tolerance &&
-            pixelColor.getGreen() <= upperBound.getGreen() + tolerance;
-    boolean blueInRange = pixelColor.getBlue() >= lowerBound.getBlue() - tolerance &&
-            pixelColor.getBlue() <= upperBound.getBlue() + tolerance;
-    boolean opacityInRange = pixelColor.getOpacity() >= lowerBound.getOpacity() - tolerance &&
-            pixelColor.getOpacity() <= upperBound.getOpacity() + tolerance;
+    boolean redInRange = pixelColor.getRed() >= lowerBound.getRed() - tolerance && pixelColor.getRed() <= upperBound.getRed() + tolerance;
+    boolean greenInRange = pixelColor.getGreen() >= lowerBound.getGreen() - tolerance && pixelColor.getGreen() <= upperBound.getGreen() + tolerance;
+    boolean blueInRange = pixelColor.getBlue() >= lowerBound.getBlue() - tolerance && pixelColor.getBlue() <= upperBound.getBlue() + tolerance;
+    boolean opacityInRange = pixelColor.getOpacity() >= lowerBound.getOpacity() - tolerance && pixelColor.getOpacity() <= upperBound.getOpacity() + tolerance;
 
     return redInRange && greenInRange && blueInRange && opacityInRange;
   }
 
 
-
+  // Modifizierter Bresenham mit Breite und Kollisionsprüfung
   private void drawLine(int startX, int startY, int endX, int endY) {
-    // Bresenham mit Breite und Kollisionsprüfung
     int dx = Math.abs(endX - startX);
     int dy = Math.abs(endY - startY);
     int sx = startX < endX ? 1 : -1;
@@ -148,7 +143,7 @@ public class RiverTurtleRenderer {
             double t = Math.min(distFromBoundary / smallDistance, 1.0);
 
             // Interpolieren zwischen den Farben
-            Color color = GlobalColors.SHALLOW_WATER.interpolate(GlobalColors.WATER_SURFACE, t);
+            Color color = GlobalColors.SHALLOW_WATER_COLOR.interpolate(GlobalColors.OCEAN_SURFACE_COLOR, t);
 
             mapModel.addPixel(px, py, color);
 
@@ -176,7 +171,7 @@ public class RiverTurtleRenderer {
   }
 
 
-
+  // Valid, wenn nicht in Bergregion (dort dürfen keine Flüsse entlanglaufen) und wenn im Polygon
   private boolean isValidPosition(int x, int y) {
     Point p = geometryFactory.createPoint(new Coordinate(x, y));
     return preparedPolygon.contains(p) && !isMountain(x, y);
@@ -192,6 +187,7 @@ public class RiverTurtleRenderer {
     return false;
   }
 
+  // Zustand der Turtle
   protected static class TurtleState {
     double x, y, angle;
 

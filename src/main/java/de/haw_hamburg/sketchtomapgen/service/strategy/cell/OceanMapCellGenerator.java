@@ -16,6 +16,7 @@ import java.util.Random;
 
 public class OceanMapCellGenerator implements MapCellGenerationStrategy{
   private static final float NOISE_FREQUENCY = 0.004f;
+  private final GeometryFactory geometryFactory = new GeometryFactory();
   @Override
   public void generateMap(CellModel cellModel, GeneratedMapModel generatedMapModel) {
     FastNoiseLite noiseGenerator = new FastNoiseLite();
@@ -37,7 +38,7 @@ public class OceanMapCellGenerator implements MapCellGenerationStrategy{
         double normalizedY = (double) y / generatedMapModel.getHeight();
         Coordinate coordinate = new Coordinate(x, y);
 
-        if (preparedCellPolygon.covers(new GeometryFactory().createPoint(coordinate))
+        if (preparedCellPolygon.covers(geometryFactory.createPoint(coordinate))
                 && coordinate.x > 0 && coordinate.x < generatedMapModel.getWidth()
                 && coordinate.y > 0 && coordinate.y < generatedMapModel.getHeight()
         ) {
@@ -69,7 +70,7 @@ public class OceanMapCellGenerator implements MapCellGenerationStrategy{
 
   private double calculateSmoothDistanceToEdge(Coordinate point, Polygon polygon, double width, double height) {
     double maxDistance = Math.min(width, height);
-    double minDistanceToEdge = polygon.getBoundary().distance(new GeometryFactory().createPoint(point));
+    double minDistanceToEdge = polygon.getBoundary().distance(geometryFactory.createPoint(point));
     double normalizedDistance = Math.min(1.0, minDistanceToEdge / maxDistance);
     return Math.pow(normalizedDistance, 0.5);
   }
@@ -84,18 +85,18 @@ public class OceanMapCellGenerator implements MapCellGenerationStrategy{
     final double SURFACE_MAX = 0.3;
 
     if (height <= SHALLOW_MAX) {
-      return GlobalColors.SHALLOW_WATER.interpolate(
-              GlobalColors.WATER_SURFACE,
+      return GlobalColors.SHALLOW_WATER_COLOR.interpolate(
+              GlobalColors.OCEAN_SURFACE_COLOR,
               height / SHALLOW_MAX
       );
     } else if (height <= SURFACE_MAX) {
       double blend = (height - SHALLOW_MAX) / (SURFACE_MAX - SHALLOW_MAX);
-      return GlobalColors.WATER_SURFACE.interpolate(
-              GlobalColors.DEEP_WATER,
+      return GlobalColors.OCEAN_SURFACE_COLOR.interpolate(
+              GlobalColors.DEEP_OCEAN_COLOR,
               blend
       );
     } else {
-      return GlobalColors.DEEP_WATER;
+      return GlobalColors.DEEP_OCEAN_COLOR;
     }
   }
 }

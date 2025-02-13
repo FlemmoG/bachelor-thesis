@@ -7,8 +7,13 @@ import org.locationtech.jts.geom.Polygon;
 
 public class CellModel {
 
+  // Kerndatenstruktur die die Form der Zelle repräsentiert
   private Polygon polygon;
+
+  // Farbe für Visualisierung in der Regionsaufteilung
   private Color color;
+
+  // Definiert das Biom der Zelle
   private Icon icon;
   private Coordinate centroid;
 
