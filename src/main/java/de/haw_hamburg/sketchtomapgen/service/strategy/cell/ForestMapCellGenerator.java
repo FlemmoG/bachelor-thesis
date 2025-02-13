@@ -57,45 +57,47 @@ public class ForestMapCellGenerator implements MapCellGenerationStrategy {
               -1
       );
 
-      if (model.run(new Random().nextInt(), 0)) {
-        BufferedImage wfcTile = model.graphics();
-        BufferedImage outputImage = new BufferedImage(outputWidth, outputHeight, BufferedImage.TYPE_INT_RGB);
+      // wiederholt versuchen, bis erfolgreich
+      while (!model.run(new Random().nextInt(), 0)) {
+        System.out.println("WFC Fehler, retrying...");
+      }
 
-        Graphics2D g2d = outputImage.createGraphics();
-        TexturePaint texture = new TexturePaint(wfcTile, new Rectangle(0, 0, WFC_TILE_SIZE, WFC_TILE_SIZE));
-        g2d.setPaint(texture);
-        g2d.fillRect(0, 0, outputWidth, outputHeight);
-        g2d.dispose();
+      BufferedImage wfcTile = model.graphics();
+      BufferedImage outputImage = new BufferedImage(outputWidth, outputHeight, BufferedImage.TYPE_INT_RGB);
 
-        for (int x = minX; x <= maxX; x++) {
-          for (int y = minY; y <= maxY; y++) {
-            Coordinate coord = new Coordinate(x, y);
-            if (preparedCellPolygon.covers(GEOMETRY_FACTORY.createPoint(coord))) {
-              int imgX = x - minX;
-              int imgY = y - minY;
+      Graphics2D g2d = outputImage.createGraphics();
+      TexturePaint texture = new TexturePaint(wfcTile, new Rectangle(0, 0, WFC_TILE_SIZE, WFC_TILE_SIZE));
+      g2d.setPaint(texture);
+      g2d.fillRect(0, 0, outputWidth, outputHeight);
+      g2d.dispose();
 
-              double distance = DistanceOp.distance(
-                      GEOMETRY_FACTORY.createPoint(coord),
-                      cellBoundary
-              );
+      for (int x = minX; x <= maxX; x++) {
+        for (int y = minY; y <= maxY; y++) {
+          Coordinate coord = new Coordinate(x, y);
+          if (preparedCellPolygon.covers(GEOMETRY_FACTORY.createPoint(coord))) {
+            int imgX = x - minX;
+            int imgY = y - minY;
 
-              int rgb = outputImage.getRGB(imgX, imgY);
-              Color color = applyEdgeEffects(
-                      Color.rgb(
-                              (rgb >> 16) & 0xFF,
-                              (rgb >> 8) & 0xFF,
-                              rgb & 0xFF
-                      ),
-                      distance
-              );
+            double distance = DistanceOp.distance(
+                    GEOMETRY_FACTORY.createPoint(coord),
+                    cellBoundary
+            );
 
-              generatedMapModel.addPixel(x, y, color);
-            }
+            int rgb = outputImage.getRGB(imgX, imgY);
+            Color color = applyEdgeEffects(
+                    Color.rgb(
+                            (rgb >> 16) & 0xFF,
+                            (rgb >> 8) & 0xFF,
+                            rgb & 0xFF
+                    ),
+                    distance
+            );
+
+            generatedMapModel.addPixel(x, y, color);
           }
         }
-      } else {
-        System.out.println("Undefinierter WFC Algorithmus Fehler");
       }
+
     } catch (IOException e) {
       e.printStackTrace();
     }

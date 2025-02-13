@@ -4,6 +4,7 @@ import de.haw_hamburg.sketchtomapgen.model.collection.CellModelCollection;
 import de.haw_hamburg.sketchtomapgen.service.MapGenerationService;
 import de.haw_hamburg.sketchtomapgen.util.DataReceiver;
 import de.haw_hamburg.sketchtomapgen.util.Icon;
+import de.haw_hamburg.sketchtomapgen.util.ViewRoutes;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -16,6 +17,7 @@ import javafx.util.Duration;
 
 import javax.imageio.ImageIO;
 import java.io.File;
+import java.io.IOException;
 
 import static javafx.embed.swing.SwingFXUtils.fromFXImage;
 
@@ -31,15 +33,19 @@ public class ResultController extends AbstractController implements DataReceiver
   }
 
   @FXML
-  private void handleRestart() {
-//    System.out.println("Restarting the application...");
-//    try {
-//      navigationController.switchView(ViewRoutes.DRAW_VIEW);
-//    } catch (IOException e) {
-//      throw new RuntimeException(e);
-//    }
+  private void handleRegenerate() {
     mapGenerationService.resetService();
     portrayResult();
+  }
+
+  @FXML
+  private void handleRestart() {
+        System.out.println("Restarting the application...");
+    try {
+      navigationController.switchView(ViewRoutes.DRAW_VIEW);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @FXML
@@ -105,18 +111,20 @@ public class ResultController extends AbstractController implements DataReceiver
   }
 
   private void portrayResult() {
-    drawStep(Icon.OCEAN, () ->
-            drawStep(Icon.MOUNTAIN, () ->
-                    drawStep(Icon.VILLAGE, () ->
-                            drawStep(Icon.TREE, () ->
-                                    drawStep(Icon.WATER, () -> {
-                                      PauseTransition pause = new PauseTransition(Duration.millis(50));
-                                      pause.setOnFinished(e -> {
-                                        mapGenerationService.addDetails();
-                                        clearCanvasAndDrawImage();
-                                      });
-                                      pause.play();
-                                    })
+    drawStep(Icon.BLANK, () ->
+            drawStep(Icon.OCEAN, () ->
+                    drawStep(Icon.MOUNTAIN, () ->
+                            drawStep(Icon.VILLAGE, () ->
+                                    drawStep(Icon.TREE, () ->
+                                            drawStep(Icon.WATER, () -> {
+                                              PauseTransition pause = new PauseTransition(Duration.millis(50));
+                                              pause.setOnFinished(e -> {
+                                                mapGenerationService.addDetails();
+                                                clearCanvasAndDrawImage();
+                                              });
+                                              pause.play();
+                                            })
+                                    )
                             )
                     )
             )
@@ -126,7 +134,9 @@ public class ResultController extends AbstractController implements DataReceiver
   // Pausen sind nötig, damit die Karte nach und nach aufgebaut wird
   private void drawStep(Icon icon, Runnable nextStep) {
     Platform.runLater(() -> {
-      if (icon != null) {
+      if (icon == Icon.BLANK) {
+        mapGenerationService.drawLandBase();
+      } else if (icon != null) {
         mapGenerationService.generateMap(icon);
       }
       clearCanvasAndDrawImage();

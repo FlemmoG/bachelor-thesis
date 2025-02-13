@@ -17,6 +17,7 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
+import org.locationtech.jts.operation.distance.DistanceOp;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -28,11 +29,12 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
   @Override
   public void generateMap(CellModel cellModel, GeneratedMapModel generatedMapModel) {
     // Skalierungsvariablen
-    final double mountainSizeFactor = 2.5;   // Multipliziert die Größe der Berge
-    final double noiseThreshold = 0.3;      // Ab diesem Noise-Wert werden Berge gezeichnet
+    final double mountainSizeFactor = 2;   // Multipliziert die Größe der Berge
+    final double noiseThreshold = 0.2;      // Ab diesem Noise-Wert werden Berge gezeichnet
     final int stepSize = 20;                // Schrittweite für die Iteration (größere Werte = weniger Berge)
-    final int minDistanceBetweenAssets = 40; // Minimaler Abstand zwischen zwei Bergen
+    final int minDistanceBetweenAssets = 30; // Minimaler Abstand zwischen zwei Bergen
     final int minMountainSize = 30; // Minimale Größe der Berge (verhindert zu kleine Berge, die unnatürlich wirken)
+    final int minDistanceFromBoundary = 30;  // Minimaler Abstand zu den Zellgrenzen
 
     // Noise-Generator initialisieren
     FastNoiseLite fastNoiseLite = new FastNoiseLite(new Random().nextInt());
@@ -43,16 +45,6 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
     Polygon polygon = cellModel.getPolygon();
     Envelope envelope = polygon.getEnvelopeInternal();
     PreparedGeometry preparedCellPolygon = PreparedGeometryFactory.prepare(polygon);
-
-    // Grundfläche
-    for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x++) {
-      for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y++) {
-        Coordinate point = new Coordinate(x, y);
-        if (preparedCellPolygon.covers(new GeometryFactory().createPoint(point))) {
-          generatedMapModel.addPixel(x,y, GlobalColors.TOTALLY_FLAT);
-        }
-      }
-    }
 
     // Mountain-Asset laden
     URL mountainImageUrl = getClass().getResource(AssetRoutes.MOUNTAINS_ASSET);
@@ -86,6 +78,9 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
         if (normalizedValue > noiseThreshold) {
 
           if (preparedCellPolygon.covers(new GeometryFactory().createPoint(point))) {
+            if (distanceToBoundary(point, polygon) < minDistanceFromBoundary) {
+              continue;
+            }
             int mountainSize = (int) (5 + Math.pow(normalizedValue, 3) * 100 * mountainSizeFactor);
             System.out.println(mountainSize);
             if (mountainSize >= minMountainSize) {
@@ -121,5 +116,12 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
     }
 
     return output;
+  }
+
+  private double distanceToBoundary(Coordinate coordinate, Polygon polygon){
+    return DistanceOp.distance(
+            new GeometryFactory().createPoint(coordinate),
+            polygon.getBoundary()
+    );
   }
 }

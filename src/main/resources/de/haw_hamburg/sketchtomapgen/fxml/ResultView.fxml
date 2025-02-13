@@ -16,12 +16,14 @@
     </center>
     <right>
         <VBox minWidth="200" prefWidth="200" maxWidth="200" spacing="20" alignment="CENTER" style="-fx-border-color: black; -fx-padding: 10;">
+            <!-- Regenerate Button -->
+            <Button fx:id="regenerateButton" text="Regenerate" minWidth="100" minHeight="40" onAction="#handleRegenerate"/>
             <!-- Restart Button -->
             <Button fx:id="restartButton" text="Restart" minWidth="100" minHeight="40" onAction="#handleRestart"/>
             <!-- Export Button -->
-            <Button fx:id="exportButton" text="Exportieren" minWidth="100" minHeight="40" onAction="#handleExport"/>
+            <Button fx:id="exportButton" text="Export" minWidth="100" minHeight="40" onAction="#handleExport"/>
             <!-- Filters Button -->
-            <Button fx:id="filtersButton" text="Filter hinzufügen" minWidth="100" minHeight="40" onAction="#addFilters"/>
+            <Button fx:id="filtersButton" text="Add filters" minWidth="100" minHeight="40" onAction="#addFilters"/>
         </VBox>
     </right>
 </BorderPane>

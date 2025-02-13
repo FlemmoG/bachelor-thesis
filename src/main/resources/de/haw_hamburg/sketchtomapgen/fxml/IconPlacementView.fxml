@@ -54,14 +54,16 @@
                     </graphic>
                 </Button>
             </HBox>
+            <!-- Undo Button -->
+            <Button fx:id="undoButton" text="Undo" minWidth="150" minHeight="50" style="-fx-background-color: #ff7662;" onAction="#handleUndo"/>
             <!-- Finish Button -->
             <Button fx:id="finishPlacementButton" text="Finish Icon Placement" minWidth="150" minHeight="50" style="-fx-background-color: lightgreen;"/>
             <!-- Satisfaction Section -->
             <VBox fx:id="satisfactionSection" spacing="10" alignment="CENTER" visible="false">
-                <Label text="Zufrieden mit der Aufteilung?" style="-fx-font-size: 14px;"/>
+                <Label text="Proceed" style="-fx-font-size: 14px;"/>
                 <HBox spacing="10" alignment="CENTER">
-                    <Button fx:id="yesButton" text="Ja" minWidth="70" minHeight="30" onAction="#openResultView"/>
-                    <Button fx:id="noButton" text="Nein" minWidth="70" minHeight="30" onAction="#handleNo"/>
+                    <Button fx:id="yesButton" text="Yes" minWidth="70" minHeight="30" onAction="#openResultView"/>
+                    <Button fx:id="noButton" text="No" minWidth="70" minHeight="30" onAction="#handleNo"/>
                 </HBox>
             </VBox>
         </VBox>

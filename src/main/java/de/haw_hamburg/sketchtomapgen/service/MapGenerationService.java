@@ -19,6 +19,8 @@ import javafx.scene.paint.Stop;
 import javafx.scene.shape.Rectangle;
 import org.apfloat.internal.ImplementationMismatchException;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.prep.PreparedGeometry;
+import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 import org.locationtech.jts.linearref.LengthIndexedLine;
 
 import java.net.URL;
@@ -75,6 +77,7 @@ public class MapGenerationService {
     if (generatedMapModel == null) {
       generatedMapModel = new GeneratedMapModel(width, height);
     }
+
     for (CellModel cell : voronoiCellModels) {
       if (cell.getIcon() == icon) {
         MapCellGenerationStrategy strategy = strategyMap.get(icon);
@@ -138,6 +141,31 @@ public class MapGenerationService {
 
     WritableImage finalImage = processingGroup.snapshot(null, null);
     generatedMapModel.setWritableImage(finalImage);
+  }
+
+  public void drawLandBase(){
+    if (voronoiCellModels == null) {
+      throw new IllegalStateException("Service not initialized");
+    }
+    if (generatedMapModel == null) {
+      generatedMapModel = new GeneratedMapModel(width, height);
+    }
+    for (Polygon polygon : voronoiCellModels.getPolygonsExcludingOcean()) {
+      PreparedGeometry preparedCellPolygon = PreparedGeometryFactory.prepare(polygon);
+
+      Envelope envelope = polygon.getEnvelopeInternal();
+
+      for (int x = (int) envelope.getMinX(); x <= envelope.getMaxX(); x++) {
+        for (int y = (int) envelope.getMinY(); y <= envelope.getMaxY(); y++) {
+          if (x >= 0 && x < width && y >= 0 && y < height) {
+            Coordinate point = new Coordinate(x, y);
+            if (preparedCellPolygon.covers(new GeometryFactory().createPoint(point))) {
+              generatedMapModel.addPixel(x, y, GlobalColors.TOTALLY_FLAT);
+            }
+          }
+        }
+      }
+    }
   }
 
   private void addLabelsToMap() {

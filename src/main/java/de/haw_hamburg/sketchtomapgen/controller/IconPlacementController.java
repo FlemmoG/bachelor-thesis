@@ -40,6 +40,8 @@ public class IconPlacementController extends AbstractController implements DataR
   @FXML
   private Button finishPlacementButton;
   @FXML
+  private Button undoButton;
+  @FXML
   private VBox satisfactionSection; // Section for satisfaction question
   @FXML
   private Button yesButton;
@@ -49,11 +51,14 @@ public class IconPlacementController extends AbstractController implements DataR
   private RegionPartitioningService regionPartitioningService;
   private Icon activeIcon = Icon.BLANK;
   private Map<Coordinate ,Icon> icons;
+  private List<Coordinate> iconHistory;
+  private SketchModel sketchModel;
 
   @FXML
   private void initialize() {
     icons = new HashMap<>();
     regionPartitioningService = new RegionPartitioningService((int) drawingCanvas.getWidth(), (int) drawingCanvas.getHeight());
+    iconHistory = new ArrayList<>();
 
     addMouseEventHandlers();
   }
@@ -90,8 +95,36 @@ public class IconPlacementController extends AbstractController implements DataR
     };
   }
 
+  @FXML
   private void finishPlacement() {
     satisfactionSection.setVisible(true);
+    drawingCanvas.setDisable(true);
+    undoButton.setDisable(true);
+    finishPlacementButton.setDisable(true);
+    treeButton.setDisable(true);
+    mountainButton.setDisable(true);
+    waterButton.setDisable(true);
+    villageButton.setDisable(true);
+  }
+
+  @FXML
+  private void handleUndo() {
+    if (iconHistory.isEmpty()) {
+      return; // Nothing to undo
+    }
+    // Get the last placed coordinate.
+    Coordinate lastCoordinate = iconHistory.remove(iconHistory.size() - 1);
+
+    // Remove the icon from the local map.
+    icons.remove(lastCoordinate);
+
+    if (sketchModel != null) {
+      sketchModel.getIcons().remove(lastCoordinate);
+      if (iconHistory.isEmpty()) {
+        portrayModel();
+      } else
+        updateCanvas();
+    }
   }
 
   @FXML
@@ -105,9 +138,17 @@ public class IconPlacementController extends AbstractController implements DataR
 
   @FXML
   private void handleNo() {
-    System.out.println("User is not satisfied with the placement.");
-    // Add logic to allow further changes or restart the placement process
+    drawingCanvas.setDisable(false);
+    satisfactionSection.setVisible(false);
+    undoButton.setDisable(false);
+    finishPlacementButton.setDisable(false);
+    treeButton.setDisable(false);
+    mountainButton.setDisable(false);
+    waterButton.setDisable(false);
+    villageButton.setDisable(false);
   }
+
+
 
   private void addMouseEventHandlers() {
 
@@ -170,68 +211,65 @@ public class IconPlacementController extends AbstractController implements DataR
     );
 
     drawingCanvas.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+      Coordinate coordinate = new Coordinate(e.getX(), e.getY());
       switch (activeIcon) {
         case TREE -> {
-          // Draw tree asset on the canvas at the mouse click position
           drawingCanvas.getGraphicsContext2D().drawImage(
                   new Image(String.valueOf(treesImageUrl), CUSTOM_CURSOR_SIZE, CUSTOM_CURSOR_SIZE, true, true),
                   e.getX() - CUSTOM_CURSOR_SIZE / 2.0,
                   e.getY() - CUSTOM_CURSOR_SIZE / 2.0
           );
-          Coordinate coordinate = new Coordinate(e.getX(), e.getY());
           icons.put(coordinate, Icon.TREE);
-          regionPartitioningService.addIcon(new Coordinate(e.getX(), e.getY()), Icon.TREE);
+          regionPartitioningService.addIcon(coordinate, Icon.TREE);
         }
         case WATER -> {
-          // Draw water asset on the canvas at the mouse click position
           drawingCanvas.getGraphicsContext2D().drawImage(
                   new Image(String.valueOf(waterImageUrl), CUSTOM_CURSOR_SIZE, CUSTOM_CURSOR_SIZE, true, true),
                   e.getX() - CUSTOM_CURSOR_SIZE / 2.0,
                   e.getY() - CUSTOM_CURSOR_SIZE / 2.0
           );
-          Coordinate coordinate = new Coordinate(e.getX(), e.getY());
           icons.put(coordinate, Icon.WATER);
           regionPartitioningService.addIcon(coordinate, Icon.WATER);
         }
         case VILLAGE -> {
-          // Draw village asset on the canvas at the mouse click position
           drawingCanvas.getGraphicsContext2D().drawImage(
                   new Image(String.valueOf(villageImageUrl), CUSTOM_CURSOR_SIZE, CUSTOM_CURSOR_SIZE, true, true),
                   e.getX() - CUSTOM_CURSOR_SIZE / 2.0,
                   e.getY() - CUSTOM_CURSOR_SIZE / 2.0
           );
-          Coordinate coordinate = new Coordinate(e.getX(), e.getY());
           icons.put(coordinate, Icon.VILLAGE);
-          regionPartitioningService.addIcon(new Coordinate(e.getX(), e.getY()), Icon.VILLAGE);
+          regionPartitioningService.addIcon(coordinate, Icon.VILLAGE);
         }
         case MOUNTAIN -> {
-          // Draw mountain asset on the canvas at the mouse click position
           drawingCanvas.getGraphicsContext2D().drawImage(
                   new Image(String.valueOf(mountainImageUrl), CUSTOM_CURSOR_SIZE, CUSTOM_CURSOR_SIZE, true, true),
                   e.getX() - CUSTOM_CURSOR_SIZE / 2.0,
                   e.getY() - CUSTOM_CURSOR_SIZE / 2.0
           );
-          Coordinate coordinate = new Coordinate(e.getX(), e.getY());
           icons.put(coordinate, Icon.MOUNTAIN);
-          regionPartitioningService.addIcon(new Coordinate(e.getX(), e.getY()), Icon.MOUNTAIN);
+          regionPartitioningService.addIcon(coordinate, Icon.MOUNTAIN);
         }
         default -> {
-          //ignore
+          // ignore
         }
       }
+
+      // Record this placement so it can be undone later.
+      iconHistory.add(coordinate);
       updateCanvas();
     });
   }
 
   @Override
   public void receiveData(Object data) {
-    if (data instanceof SketchModel sketchModel) {
-      regionPartitioningService.initializeService(sketchModel);
-      portrayModel(sketchModel);
+    if (data instanceof SketchModel receivedSketchModel) {
+      regionPartitioningService.initializeService(receivedSketchModel);
+      this.sketchModel = receivedSketchModel;
+      portrayModel();
     }
   }
 
-  private void portrayModel(SketchModel sketchModel) {
+  private void portrayModel() {
     if (drawingCanvas == null || sketchModel == null) {
       return;
     }
