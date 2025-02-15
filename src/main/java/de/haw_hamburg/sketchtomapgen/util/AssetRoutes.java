@@ -1,6 +1,8 @@
 package de.haw_hamburg.sketchtomapgen.util;
 
 public class AssetRoutes {
+  // App Icon
+  public static final String APP_ICON_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/app_icon.png";
 
   // Interface Assets (Buttons)
   public static final String MOUNTAINS_ASSET = "/de/haw_hamburg/sketchtomapgen/assets/mountain_asset.png";
