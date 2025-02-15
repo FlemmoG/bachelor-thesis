@@ -6,6 +6,7 @@
 <?import javafx.scene.layout.StackPane?>
 
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.Region?>
 <BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="de.haw_hamburg.sketchtomapgen.controller.ResultController">
     <center>
         <StackPane>
@@ -16,12 +17,14 @@
         <VBox minWidth="200" prefWidth="200" maxWidth="200" spacing="20" alignment="CENTER" style="-fx-border-color: black; -fx-padding: 10;">
             <!-- Regenerate Button -->
             <Button text="Regenerate" minWidth="100" minHeight="40" onAction="#handleRegenerate"/>
-            <!-- Restart Button -->
-            <Button text="Restart" minWidth="100" minHeight="40" onAction="#handleRestart"/>
-            <!-- Export Button -->
-            <Button text="Export" minWidth="100" minHeight="40" onAction="#handleExport"/>
             <!-- Filters Button -->
             <Button text="Add filters" minWidth="100" minHeight="40" onAction="#addFilters"/>
+            <!-- Export Button -->
+            <Button text="Export" minWidth="100" minHeight="40" onAction="#handleExport"/>
+            <!-- Spacer -->
+            <Region VBox.vgrow="ALWAYS"/>
+            <!-- Restart Button -->
+            <Button text="Restart" minWidth="100" minHeight="40" onAction="#handleRestart" style="-fx-background-color: #ff7662;"/>
         </VBox>
     </right>
 </BorderPane>

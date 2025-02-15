@@ -77,7 +77,6 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
               continue;
             }
             int mountainSize = (int) (5 + Math.pow(normalizedValue, 3) * 100 * MOUNTAIN_SIZE_FACTOR);
-            System.out.println(mountainSize);
             if (mountainSize >= MIN_MOUNTAIN_SIZE) {
               // Random Bild flips
               Image finalMountainImage = random.nextBoolean() ? flipImageHorizontally(mountainImage) : mountainImage;

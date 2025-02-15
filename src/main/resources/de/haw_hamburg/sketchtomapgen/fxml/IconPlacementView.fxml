@@ -20,7 +20,7 @@
         <VBox spacing="10" alignment="TOP_CENTER" style="-fx-border-color: black; -fx-border-width: 0 0 0 1; -fx-padding: 10;">
             <HBox spacing="5" alignment="CENTER">
                 <!-- Building Icon Button -->
-                <Button fx:id="villageButton" minWidth="80" minHeight="80" style="-fx-background-color: #f0f0f0;">
+                <Button fx:id="villageButton" minWidth="80" minHeight="80" style="-fx-background-color: #B8860B33;">
                     <graphic>
                         <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
                             <Image url="@../assets/village_asset.png" />
@@ -28,7 +28,7 @@
                     </graphic>
                 </Button>
                 <!-- Road Icon Button -->
-                <Button fx:id="mountainButton" minWidth="80" minHeight="80" style="-fx-background-color: #f0f0f0;">
+                <Button fx:id="mountainButton" minWidth="80" minHeight="80" style="-fx-background-color: #8B451933;">
                     <graphic>
                         <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
                             <Image url="@../assets/mountain_asset.png" />
@@ -38,7 +38,7 @@
             </HBox>
             <HBox spacing="5" alignment="CENTER">
                 <!-- Park Icon Button -->
-                <Button fx:id="treeButton" minWidth="80" minHeight="80" style="-fx-background-color: #f0f0f0;">
+                <Button fx:id="treeButton" minWidth="80" minHeight="80" style="-fx-background-color: #228B2233;">
                     <graphic>
                         <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
                             <Image url="@../assets/tree_asset.png" />
@@ -46,7 +46,7 @@
                     </graphic>
                 </Button>
                 <!-- Water Icon Button -->
-                <Button fx:id="waterButton" minWidth="80" minHeight="80" style="-fx-background-color: #f0f0f0;">
+                <Button fx:id="waterButton" minWidth="80" minHeight="80" style="-fx-background-color: #00BFFF33;">
                     <graphic>
                         <ImageView fitWidth="50" fitHeight="50" preserveRatio="true">
                             <Image url="@../assets/water_asset.png" />

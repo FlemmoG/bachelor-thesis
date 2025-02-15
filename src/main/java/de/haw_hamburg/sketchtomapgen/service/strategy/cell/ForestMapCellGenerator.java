@@ -61,7 +61,7 @@ public class ForestMapCellGenerator implements MapCellGenerationStrategy {
 
       // wiederholt versuchen, bis erfolgreich
       while (!model.run(new Random().nextInt(), 0)) {
-        System.out.println("WFC Fehler, retrying...");
+        System.out.println("WFC backpropagation error, retrying...");
       }
 
       BufferedImage wfcTile = model.graphics();

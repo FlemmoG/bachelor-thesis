@@ -43,7 +43,6 @@ public class VillageMapCellGenerator implements MapCellGenerationStrategy {
 
     // Markerpunkte versetzt über Knoten zeichnen
     this.nodes.addAll(networkData.nodes);
-    System.out.println("fertig");
   }
 
   // Wrapper für Straßennetz und dessen Knotenpunkte

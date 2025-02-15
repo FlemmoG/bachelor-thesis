@@ -53,7 +53,6 @@ public class RegionPartitioningService {
 
     // Über alle Cluster iterieren
     for (int i = 0; i < concaveHullsForClusters.getNumGeometries(); i++) {
-      System.out.println(concaveHullsForClusters.getNumGeometries());
       Geometry concaveHull = concaveHullsForClusters.getGeometryN(i);
 
       // Nur Icons und dessen Koordinaten beachten, wenn innerhalb des aktuellen Clutsers

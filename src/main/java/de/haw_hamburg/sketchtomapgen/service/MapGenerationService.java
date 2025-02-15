@@ -220,7 +220,6 @@ public class MapGenerationService {
 
     // Flussparameter
     int numberOfRivers = (int) combinedGeometry.getArea() / 10000;
-    System.out.println(numberOfRivers);
     for (int t = 0; t < numberOfRivers; t++) {
       // Zufälligen Startpunkt am Rand wählen
       Coordinate startCoord = getRandomEdgePoint(combinedGeometry, random);

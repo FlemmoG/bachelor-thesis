@@ -41,7 +41,6 @@ public class ResultController extends AbstractController implements DataReceiver
   // gesamte Applikation wird zurückgesetzt und der Nutzer springt zur Draw View zurück
   @FXML
   private void handleRestart() {
-    System.out.println("Restarting the application...");
     try {
       navigationController.switchView(ViewRoutes.DRAW_VIEW);
     } catch (IOException e) {

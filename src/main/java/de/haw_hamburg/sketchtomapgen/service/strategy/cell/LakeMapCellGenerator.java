@@ -18,7 +18,6 @@ public class LakeMapCellGenerator implements MapCellGenerationStrategy {
     Coordinate centroid = cellModel.getCentroid();
 
     double maxRadius = calculateMaxRadius(voronoiPoly, centroid);
-    System.out.println(maxRadius);
 
     Geometry lakeGeometry = createOrganicLakeShape(voronoiPoly, centroid, maxRadius);
 
