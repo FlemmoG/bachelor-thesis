@@ -132,7 +132,7 @@ public class MapGenerationService {
             true,
             CycleMethod.NO_CYCLE,
             new Stop(0, Color.TRANSPARENT),
-            new Stop(1, Color.rgb(0, 0, 0, 0.5)) // Rand dunkel
+            new Stop(1, Color.rgb(0, 0, 0, 0.5))
     );
     vignette.setFill(gradient);
     vignette.setBlendMode(BlendMode.MULTIPLY);

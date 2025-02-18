@@ -79,8 +79,8 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
             int mountainSize = (int) (5 + Math.pow(normalizedValue, 3) * 100 * MOUNTAIN_SIZE_FACTOR);
             if (mountainSize >= MIN_MOUNTAIN_SIZE) {
               // Random Bild flips
-              Image finalMountainImage = random.nextBoolean() ? flipImageHorizontally(mountainImage) : mountainImage;
-              generatedMapModel.addAsset((int) point.getX(), (int) point.getY(), finalMountainImage, mountainSize);
+              Image transformedImage = randomlyTransformImage(mountainImage, random);
+              generatedMapModel.addAsset((int) point.getX(), (int) point.getY(), transformedImage, mountainSize);
               // Gezeichnete Position merken
               drawnAssets.add(point);
             }
@@ -88,6 +88,51 @@ public class MountainMapCellGenerator implements MapCellGenerationStrategy {
         }
       }
     }
+  }
+
+  private Image randomlyTransformImage(Image original, Random random) {
+    Image transformed = original;
+
+    if (random.nextBoolean()) {
+      transformed = flipImageHorizontally(transformed);
+    }
+
+    // Rotation (-10° bis +10°)
+    if (random.nextDouble() > 0.3) { // 70% Chance
+      transformed = rotateImage(transformed, random.nextDouble() * 20 - 10);
+    }
+
+    return transformed;
+  }
+
+  private Image rotateImage(Image image, double degrees) {
+    double radians = Math.toRadians(degrees);
+    int width = (int) image.getWidth();
+    int height = (int) image.getHeight();
+
+    WritableImage output = new WritableImage(width, height);
+    PixelWriter writer = output.getPixelWriter();
+    PixelReader reader = image.getPixelReader();
+
+    double centerX = width / 2.0;
+    double centerY = height / 2.0;
+
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        double dx = x - centerX;
+        double dy = y - centerY;
+
+        // Rotationsmatrix
+        double rotatedX = dx * Math.cos(radians) - dy * Math.sin(radians) + centerX;
+        double rotatedY = dx * Math.sin(radians) + dy * Math.cos(radians) + centerY;
+
+        if (rotatedX >= 0 && rotatedX < width && rotatedY >= 0 && rotatedY < height) {
+          Color color = reader.getColor((int) rotatedX, (int) rotatedY);
+          writer.setColor(x, y, color);
+        }
+      }
+    }
+    return output;
   }
 
   private Image flipImageHorizontally(Image image) {
