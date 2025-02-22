@@ -85,18 +85,18 @@ public class OceanMapCellGenerator implements MapCellGenerationStrategy{
     final double SURFACE_MAX = 0.3;
 
     if (height <= SHALLOW_MAX) {
-      return GlobalColors.SHALLOW_WATER_COLOR.interpolate(
-              GlobalColors.OCEAN_SURFACE_COLOR,
+      return GlobalColors.CLEAR_WATER_COLOR.interpolate(
+              GlobalColors.NORMAL_WATER_COLOR,
               height / SHALLOW_MAX
       );
     } else if (height <= SURFACE_MAX) {
       double blend = (height - SHALLOW_MAX) / (SURFACE_MAX - SHALLOW_MAX);
-      return GlobalColors.OCEAN_SURFACE_COLOR.interpolate(
-              GlobalColors.DEEP_OCEAN_COLOR,
+      return GlobalColors.NORMAL_WATER_COLOR.interpolate(
+              GlobalColors.DEEP_WATER_COLOR,
               blend
       );
     } else {
-      return GlobalColors.DEEP_OCEAN_COLOR;
+      return GlobalColors.DEEP_WATER_COLOR;
     }
   }
 }

@@ -84,6 +84,6 @@ public class LakeMapCellGenerator implements MapCellGenerationStrategy {
   // Farbinterpolation
   private Color lakeColorForPosition(Point position, Point center, double distanceToBoundary) {
     double t = Math.min(position.distance(center) / distanceToBoundary, 1.0);
-    return GlobalColors.DEEP_OCEAN_COLOR.interpolate(GlobalColors.OCEAN_SURFACE_COLOR, t);
+    return GlobalColors.DEEP_WATER_COLOR.interpolate(GlobalColors.NORMAL_WATER_COLOR, t);
   }
 }

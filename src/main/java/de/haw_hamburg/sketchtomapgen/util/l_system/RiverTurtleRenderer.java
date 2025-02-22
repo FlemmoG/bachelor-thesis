@@ -101,8 +101,8 @@ public class RiverTurtleRenderer {
     Color pixelColor = mapModel.getColorAt(ix, iy);
 
     // Interpolationsbereich.
-    Color lowerBound = GlobalColors.DEEP_OCEAN_COLOR;
-    Color upperBound = GlobalColors.OCEAN_SURFACE_COLOR;
+    Color lowerBound = GlobalColors.DEEP_WATER_COLOR;
+    Color upperBound = GlobalColors.NORMAL_WATER_COLOR;
 
     double tolerance = 0.01;
 
@@ -143,7 +143,7 @@ public class RiverTurtleRenderer {
             double t = Math.min(distFromBoundary / smallDistance, 1.0);
 
             // Interpolieren zwischen den Farben
-            Color color = GlobalColors.SHALLOW_WATER_COLOR.interpolate(GlobalColors.OCEAN_SURFACE_COLOR, t);
+            Color color = GlobalColors.CLEAR_WATER_COLOR.interpolate(GlobalColors.NORMAL_WATER_COLOR, t);
 
             mapModel.addPixel(px, py, color);
 
