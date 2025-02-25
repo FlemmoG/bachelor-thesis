@@ -2,6 +2,7 @@
 
 Dieser praktische Teil meiner Bachelorarbeit beschäftigt sich mit der **sketch-basierten Generierung von fiktionalen Landkarten**.
 
+*(Alle Beispiele sind WIP)*
 
 Das folgende Beispiel zeigt einen WIP-Umriss von **Hamburg und seinen Bezirken**, generiert durch Voronoi-Diagramme:
 
