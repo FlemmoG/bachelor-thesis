@@ -89,7 +89,7 @@ public class RegionPartitioningService {
         if (!cell.isEmpty() && cell instanceof Polygon polygon) {
           // Icon zu Centroiden zuordnen
           Coordinate centroid = polygon.getCentroid().getCoordinate();
-          Coordinate nearestIconCoord = findNearestIconCoordinate(centroid, icons);
+          Coordinate nearestIconCoord = findNearestIconCoordinate(centroid, pointsWithinHull);
           Icon icon = icons.get(nearestIconCoord);
 
           // Zelle auf Umriss zuschneiden (falls am Rand)
@@ -184,11 +184,11 @@ public class RegionPartitioningService {
     return geometryFactory.createPolygon(coordinates);
   }
 
-  private Coordinate findNearestIconCoordinate(Coordinate centroid, Map<Coordinate, Icon> icons) {
+  private Coordinate findNearestIconCoordinate(Coordinate centroid, List<Coordinate> iconCoords) {
     double minDistance = Double.MAX_VALUE;
     Coordinate nearestCoord = null;
 
-    for (Coordinate coord : icons.keySet()) {
+    for (Coordinate coord : iconCoords) {
       double distance = centroid.distance(coord);
       if (distance < minDistance) {
         minDistance = distance;
