@@ -1,24 +1,24 @@
-# Sketch-basierte Generierung von fiktionalen Landkarten
+# Sketch-based Generation of Fictional Maps
 
-Dieser praktische Teil meiner Bachelorarbeit beschäftigt sich mit der **sketch-basierten Generierung von fiktionalen Landkarten**.
+This practical part of my bachelor's thesis deals with the **sketch-based generation of fictional maps**.
 
-*(Alle Beispiele sind WIP)*
+*(All examples are WIP)*
 
-Das folgende Beispiel zeigt einen WIP-Umriss von **Hamburg und seinen Bezirken**, generiert durch Voronoi-Diagramme:
+The following example shows a WIP outline of **Hamburg and its districts**, generated using Voronoi diagrams:
 
-![Bezirke Hamburg](src/main/resources/de/haw_hamburg/sketchtomapgen/rendered/HAM_MAP_1.png)
+![Districts of Hamburg](src/main/resources/de/haw_hamburg/sketchtomapgen/rendered/HAM_MAP_1.png)
 
-Das nächste Beispiel zeigt einen WIP-Umriss von **Hamburg und seinen Stadtteilen**, ebenfalls generiert durch Voronoi-Diagramme:
+The next example shows a WIP outline of **Hamburg and its neighborhoods**, also generated using Voronoi diagrams:
 
-![Stadtteile Hamburg](src/main/resources/de/haw_hamburg/sketchtomapgen/rendered/HAM_MAP_2.png)
+![Neighborhoods of Hamburg](src/main/resources/de/haw_hamburg/sketchtomapgen/rendered/HAM_MAP_2.png)
 
-Sketch -> Icon Placement -> 
-Voronoi-Diagramm -> Prozedural generierte Karte: 
+Sketch -> Icon Placement ->
+Voronoi Diagram -> Procedurally generated map:
 
-![Prozess](src/main/resources/de/haw_hamburg/sketchtomapgen/rendered/PROCESS.jpg)
+![Process](src/main/resources/de/haw_hamburg/sketchtomapgen/rendered/PROCESS.jpg)
 
-Die Gebirgszellen wurden mit Perlin-Noise generiert, der Ozean mit Simplex-Noise, die Seeregion durch zufällige Variationen, das Waldgebiet mithilfe des WFC-Algorithmus und die Flussstrukturen durch L-Systeme.
+The mountain cells were generated using Perlin noise, the ocean using Simplex noise, the lake region through random variations, the forest area using the WFC algorithm, and the river structures using L-systems.
 
 ![HQFinal](src/main/resources/de/haw_hamburg/sketchtomapgen/rendered/HQGEN.png)
 
-Kombination aus allen Landschaftstypen in höherer Qualität.
+Combination of all landscape types in higher quality.
